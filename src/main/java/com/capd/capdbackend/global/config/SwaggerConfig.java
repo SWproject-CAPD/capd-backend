@@ -39,7 +39,7 @@ public class SwaggerConfig {
                 .addServersItem(localServer)
                 .components(new Components().addSecuritySchemes(jwt, securityScheme))
                 .addSecurityItem(securityRequirement)
-                .info(new Info().title("Swagger API 명세서").version("1.0").description("게시판 프로젝트"));
+                .info(new Info().title("Swagger API 명세서").version("1.0").description("복막투석 환자 관리 프로젝트"));
     }
 
     @Bean
