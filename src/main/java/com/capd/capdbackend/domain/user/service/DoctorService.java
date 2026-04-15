@@ -57,4 +57,19 @@ public class DoctorService {
         // entity -> response dto
         return doctorSignUpMapper.toResponse(savedUser);
     }
+
+    // 의사인 사용자 삭제
+    @Transactional
+    public void deleteDoctor(String licenseId) {
+
+        // 유저 조회
+        UserEntity user = userRepository.findByLicenseId(licenseId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 유저 삭제
+        userRepository.delete(user);
+
+        // 삭제 성공 시 로그 출력
+        log.info("의사 사용자 삭제 성공: licenseId={}", licenseId);
+    }
 }
