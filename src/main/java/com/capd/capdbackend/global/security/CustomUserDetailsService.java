@@ -18,7 +18,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
         UserEntity user;
 
-        // 1. 넘어온 값이 이메일인지(환자), 면허번호인지(의사) 구분
+        // 넘어온 값이 이메일인지(환자), 면허번호인지(의사) 구분
         if (identifier.contains("@")) {
             user = userRepository.findByEmail(identifier)
                     .orElseThrow(() -> new UsernameNotFoundException("환자를 찾을 수 없습니다: " + identifier));
