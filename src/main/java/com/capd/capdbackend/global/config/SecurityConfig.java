@@ -1,6 +1,7 @@
 package com.capd.capdbackend.global.config;
 
 import com.capd.capdbackend.global.jwt.JwtProvider;
+import com.capd.capdbackend.global.security.CustomUserDetailsService;
 import com.capd.capdbackend.global.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -27,6 +28,7 @@ public class SecurityConfig {
 
     private final CorsConfig corsConfig;
     private final JwtProvider jwtProvider;
+    private final CustomUserDetailsService customUserDetailsService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -43,7 +45,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                .addFilterBefore(new JwtAuthenticationFilter(jwtProvider, userDetailsService()),
+                .addFilterBefore(new JwtAuthenticationFilter(jwtProvider, customUserDetailsService),
                         UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -59,15 +61,15 @@ public class SecurityConfig {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
-    // 테스트용 임시 유저 서비스
-    @Bean
-    public UserDetailsService userDetailsService() {
-        UserDetails admin = User.builder()
-                .username("admin")
-                .password(passwordEncoder().encode("1234"))
-                .roles("ADMIN")
-                .build();
-
-        return new InMemoryUserDetailsManager(admin);
-    }
+//    // 테스트용 임시 유저 서비스
+//    @Bean
+//    public UserDetailsService userDetailsService() {
+//        UserDetails admin = User.builder()
+//                .username("admin")
+//                .password(passwordEncoder().encode("1234"))
+//                .roles("ADMIN")
+//                .build();
+//
+//        return new InMemoryUserDetailsManager(admin);
+//    }
 }

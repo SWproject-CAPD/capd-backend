@@ -1,6 +1,8 @@
 package com.capd.capdbackend.global.jwt;
 
 
+import com.capd.capdbackend.domain.auth.exception.AuthErrorCode;
+import com.capd.capdbackend.global.exception.CustomException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.Cookie;
@@ -74,7 +76,7 @@ public class JwtProvider {
     }
 
     // 이것도 auth 파일 하면 주석 처리
-//    // 토큰 유효성 검증
+    // 토큰 유효성 검증
 //    public boolean validateToken(String token) {
 //        try {
 //            parseClaims(token);
