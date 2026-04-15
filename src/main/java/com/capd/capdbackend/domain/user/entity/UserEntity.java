@@ -1,6 +1,7 @@
 package com.capd.capdbackend.domain.user.entity;
 
 import com.capd.capdbackend.global.common.BaseTimeEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -50,4 +51,18 @@ public class UserEntity extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "doctor_id")
     private UserEntity doctor; // 담당 의사 엔티티 참조
+
+    @JsonIgnore
+    @Column(name = "refresh_token")
+    private String refreshToken; // 토큰 저장 필드
+
+    // refreshToken 업데이트 메서드
+    public void createRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
+    // 로그아웃시 refreshToken Null로 변경
+    public void expireRefreshToken() {
+        this.refreshToken = null;
+    }
 }

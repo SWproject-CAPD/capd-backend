@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/doctors")
+@RequestMapping("/api")
 @Tag(name = "Doctor", description = "의사 관련 API")
 public class DoctorController {
 
@@ -24,7 +24,7 @@ public class DoctorController {
 
     // 회원가입 api
     @Operation(summary = "회원가입", description = "의사 회원가입 API")
-    @PostMapping("/join")
+    @PostMapping("/doctors")
     public ResponseEntity<BaseResponse<SignUpResponse>> signUp(
             @RequestBody @Valid DoctorSignUpRequest request) {
 
