@@ -1,5 +1,6 @@
 package com.capd.capdbackend.global.security;
 
+import com.capd.capdbackend.domain.doctor.entity.DoctorEntity;
 import com.capd.capdbackend.domain.user.entity.UserEntity;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
@@ -13,14 +14,16 @@ import java.util.List;
 public class CustomUserDetails implements UserDetails {
 
     private final UserEntity user;
+    private final String identifier;
 
-    public CustomUserDetails(UserEntity user) {
+    public CustomUserDetails(UserEntity user, String identifier) {
         this.user = user;
+        this.identifier = identifier;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(user.getRole().toString()));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
     }
 
     @Override
@@ -28,10 +31,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        if (user.getLicenseId() != null && !user.getLicenseId().isEmpty()) {
-            return user.getLicenseId();
-        }
-        return user.getEmail();
+        return this.identifier;
     }
 
     @Override
