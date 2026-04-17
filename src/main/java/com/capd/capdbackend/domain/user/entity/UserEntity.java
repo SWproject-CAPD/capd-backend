@@ -1,6 +1,7 @@
 package com.capd.capdbackend.domain.user.entity;
 
 import com.capd.capdbackend.global.common.BaseTimeEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -34,4 +35,16 @@ public class UserEntity extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Role role;
+
+    @JsonIgnore
+    @Column(name = "refresh_token")
+    private String refreshToken; // 토큰 저장 필드
+
+    public void createRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
+    public void expireRefreshToken() {
+        this.refreshToken = null;
+    }
 }
