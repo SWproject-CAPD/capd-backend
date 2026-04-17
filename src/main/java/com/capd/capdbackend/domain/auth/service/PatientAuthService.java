@@ -71,4 +71,20 @@ public class PatientAuthService {
         // 응답 반환
         return patientAuthMapper.toResponse(user, patient, accessToken, expirationTime);
     }
+
+    @Transactional
+    public void patientLogout(String token) {
+
+        // 토큰에서 Bearer 제거 후 이메일 추출
+        String resolvedToken = token.substring(7);
+        String email = jwtProvider.extractSocialId(resolvedToken);
+
+        // DB에서 유저 찾기
+        UserEntity user = userRepository.findByEmail(email).orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 리프레시 토큰 삭제 => Null로 업데이트 함
+        user.expireRefreshToken();
+
+        log.info("로그아웃 성공: {}", email);
+    }
 }

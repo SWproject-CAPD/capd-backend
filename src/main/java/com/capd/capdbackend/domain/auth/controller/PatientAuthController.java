@@ -11,14 +11,12 @@ import com.capd.capdbackend.global.jwt.JwtProvider;
 import com.capd.capdbackend.global.response.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -51,4 +49,22 @@ public class PatientAuthController {
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "로그인에 성공했습니다.", patientLoginResponse));
     }
+
+    @Operation(summary = "환자 로그아웃", description = "患者 로그아웃 api")
+    @DeleteMapping("/patients/tokens")
+    public ResponseEntity<BaseResponse<PatientLoginResponse>> logout(
+            @RequestHeader("Authorization") String token, HttpServletResponse response) {
+
+        // service 로직 실행 (DB에서 토큰 삭제)
+        patientAuthService.patientLogout(token);
+
+        // 브라우저에서 쿠키 삭제
+        Cookie cookie = new Cookie("refreshToken", null);
+        cookie.setMaxAge(0);
+        cookie.setPath("/");
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok(BaseResponse.success(200, "로그아웃에 성공했습니다.", null));
+    }
+
 }
