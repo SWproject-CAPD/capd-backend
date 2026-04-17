@@ -5,7 +5,6 @@ import com.capd.capdbackend.domain.auth.dto.response.DoctorLoginResponse;
 import com.capd.capdbackend.domain.auth.exception.AuthErrorCode;
 import com.capd.capdbackend.domain.auth.mapper.DoctorAuthMapper;
 import com.capd.capdbackend.domain.doctor.entity.DoctorEntity;
-import com.capd.capdbackend.domain.doctor.exception.DoctorErrorCode;
 import com.capd.capdbackend.domain.doctor.repository.DoctorRepository;
 import com.capd.capdbackend.domain.user.entity.UserEntity;
 import com.capd.capdbackend.domain.user.exception.UserErrorCode;
@@ -30,7 +29,9 @@ public class DoctorAuthService {
     private final JwtProvider jwtProvider;
     private final DoctorAuthMapper doctorAuthMapper;
     private final DoctorRepository doctorRepository;
+    private final UserRepository userRepository;
 
+    // 로그인
     @Transactional
     public DoctorLoginResponse doctorLogin(DoctorLoginRequest request) {
 
@@ -51,7 +52,7 @@ public class DoctorAuthService {
         UserEntity user = doctor.getUser();
 
         // accessToken 및 refreshToken 발급
-        String accessToken = jwtProvider.createAccessToken(user.getEmail(), user.getRole().toString(), "custom");
+        String accessToken = jwtProvider.createAccessToken(user.getEmail(), user.getRole().toString(), "custom"); // 토큰 안에 공통 정보인 이메일을 넣음
         String refreshToken = jwtProvider.createRefreshToken(user.getEmail(), UUID.randomUUID().toString());
 
         // refreshToken을 DB에 저장
@@ -65,5 +66,22 @@ public class DoctorAuthService {
 
         // 응답 반환
         return doctorAuthMapper.toResponse(user, doctor, accessToken, expirationTime);
+    }
+
+    // 로그아웃
+    @Transactional
+    public void doctorLogout(String token) {
+
+        // 토큰에서 Bearer 제거 후 이메일 추출
+        String resolvedToken = token.substring(7);
+        String email = jwtProvider.extractSocialId(resolvedToken);
+
+        // DB에서 유저 찾기
+        UserEntity user = userRepository.findByEmail(email).orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 리프레시 토큰 삭제 => Null로 업데이트 함
+        user.expireRefreshToken();
+
+        log.info("로그아웃 성공: {}", email);
     }
 }
