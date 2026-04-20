@@ -90,8 +90,14 @@ public class DoctorService {
         DoctorEntity doctor = doctorRepository.findByLicenseId(licenseId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
+        // UserEntity 꺼내두기 => doctor에서 삭제되면 user에서도 삭제
+        UserEntity user = doctor.getUser();
+
         // 의사 사용자 삭제
         doctorRepository.delete(doctor);
+
+        // user 테이블에서도 삭제
+        userRepository.delete(user);
 
         // 삭제 성공하면 로그 출력
         log.info("의사 사용자 삭제 성공");

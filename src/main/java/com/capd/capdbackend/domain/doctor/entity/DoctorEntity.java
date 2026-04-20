@@ -21,7 +21,7 @@ public class DoctorEntity extends BaseTimeEntity {
     private Long doctorId; // 의사 고유번호
 
     // UserEntity에서 이름, 이메일, 비밀번호, 전화번호, 권한을 받을 수 있음 (user.get()...)
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user; // UserEntity의 userId와 1대1 매핑
 
