@@ -48,6 +48,7 @@ public class DoctorController {
         return ResponseEntity.ok(BaseResponse.success(200, "의사 본인 정보 조회 성공", doctorInfo));
     }
 
+    // 의사 회원탈퇴 API
     @Operation(summary = "의사 사용자 삭제", description = "의사인 사용자 삭제하는 API")
     @DeleteMapping("/doctors/me")
     public ResponseEntity<BaseResponse<Void>> doctorDelete(
