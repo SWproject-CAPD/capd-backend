@@ -47,4 +47,17 @@ public class PatientController {
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "환자 본인 정보 조회 성공", patientInfo));
     }
+
+    // 환자 삭제 API
+    @Operation(summary = "환자 사용자 삭제", description = "환자인 사용자가 탈퇴하는 API")
+    @DeleteMapping("/patients/me")
+    public ResponseEntity<BaseResponse<Void>> patientDelete(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        // service 호출
+        patientService.patientDelete(userDetails.getIdentifier());
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "환자 사용자 삭제 성공", null));
+    }
 }

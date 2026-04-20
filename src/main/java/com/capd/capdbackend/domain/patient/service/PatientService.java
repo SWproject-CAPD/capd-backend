@@ -78,4 +78,25 @@ public class PatientService {
         // entity -> response dto
         return patientInfoMapper.toResponse(patient, user);
     }
+
+    // 환자 회원탈퇴
+    @Transactional
+    public void patientDelete(String email) {
+
+        // 유저 조회
+        PatientEntity patient = patientRepository.findByUserEmail(email)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // UserEntity 꺼내두기 => patient에서 삭제되면 user에서도 삭제
+        UserEntity user = patient.getUser();
+
+        // 환자 사용자 삭제
+        patientRepository.delete(patient);
+
+        // user 테이블에서도 삭제
+        userRepository.delete(user);
+
+        // 삭제 성공하면 로그 출력
+        log.info("환자 사용자 삭제 성공");
+    }
 }
