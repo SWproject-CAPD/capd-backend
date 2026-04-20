@@ -81,4 +81,19 @@ public class DoctorService {
         // 응답 반환
         return doctorInfoMapper.toResponse(doctor, user);
     }
+
+    // 의사 회원탈퇴
+    @Transactional
+    public void doctorDelete(String licenseId) {
+
+        // 유저 조회
+        DoctorEntity doctor = doctorRepository.findByLicenseId(licenseId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 의사 사용자 삭제
+        doctorRepository.delete(doctor);
+
+        // 삭제 성공하면 로그 출력
+        log.info("의사 사용자 삭제 성공");
+    }
 }
