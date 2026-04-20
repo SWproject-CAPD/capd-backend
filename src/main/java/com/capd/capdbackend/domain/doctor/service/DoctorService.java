@@ -78,7 +78,7 @@ public class DoctorService {
         // UserEntity 꺼내기
         UserEntity user = doctor.getUser();
 
-        // 응답 반환
+        // entity -> response DTO
         return doctorInfoMapper.toResponse(doctor, user);
     }
 
