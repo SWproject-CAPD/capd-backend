@@ -52,7 +52,7 @@ public class DoctorAuthService {
         UserEntity user = doctor.getUser();
 
         // accessToken 및 refreshToken 발급
-        String accessToken = jwtProvider.createAccessToken(user.getEmail(), user.getRole().toString(), "custom"); // 토큰 안에 공통 정보인 이메일을 넣음
+        String accessToken = jwtProvider.createAccessToken(request.getLicenseId(), user.getRole().toString(), "custom"); // 토큰 안에 공통 정보인 이메일을 넣음
         String refreshToken = jwtProvider.createRefreshToken(user.getEmail(), UUID.randomUUID().toString());
 
         // refreshToken을 DB에 저장
@@ -74,14 +74,17 @@ public class DoctorAuthService {
 
         // 토큰에서 Bearer 제거 후 이메일 추출
         String resolvedToken = token.substring(7);
-        String email = jwtProvider.extractSocialId(resolvedToken);
+        String licenseId = jwtProvider.extractSocialId(resolvedToken);
 
         // DB에서 유저 찾기
-        UserEntity user = userRepository.findByEmail(email).orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+        DoctorEntity doctor = doctorRepository.findByLicenseId(licenseId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        UserEntity user = doctor.getUser();
 
         // 리프레시 토큰 삭제 => Null로 업데이트 함
         user.expireRefreshToken();
 
-        log.info("로그아웃 성공: {}", email);
+        log.info("로그아웃 성공: {}", licenseId);
     }
 }
