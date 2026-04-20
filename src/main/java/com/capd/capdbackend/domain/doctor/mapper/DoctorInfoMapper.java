@@ -16,6 +16,7 @@ public class DoctorInfoMapper {
                 .name(user.getUserName())
                 .email(user.getEmail())
                 .phone(user.getPhone())
+                .role(user.getRole())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
