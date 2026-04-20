@@ -1,5 +1,6 @@
 package com.capd.capdbackend.domain.patient.entity;
 
+import com.capd.capdbackend.domain.doctor.entity.DoctorEntity;
 import com.capd.capdbackend.domain.user.entity.UserEntity;
 import com.capd.capdbackend.global.common.BaseTimeEntity;
 import jakarta.persistence.*;
@@ -30,6 +31,10 @@ public class PatientEntity extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user; // UserEntity의 userId와 1대1 매핑
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "doctor_id", nullable = true)
+    private DoctorEntity doctor; // 담당 의사
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private Sex sex; // 성별
@@ -57,4 +62,8 @@ public class PatientEntity extends BaseTimeEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "json")
     private Map<String, Object> adherencePersona; // 환자가 의사 지시를 얼마나 잘 따르는지에 대한 경향 정보
+
+    public void assignDoctor(DoctorEntity doctor) {
+        this.doctor = doctor;
+    }
 }
