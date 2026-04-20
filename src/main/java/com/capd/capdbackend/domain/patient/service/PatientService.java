@@ -1,8 +1,10 @@
 package com.capd.capdbackend.domain.patient.service;
 
 import com.capd.capdbackend.domain.patient.dto.request.PatientSignUpRequest;
+import com.capd.capdbackend.domain.patient.dto.response.PatientInfoResponse;
 import com.capd.capdbackend.domain.patient.dto.response.PatientSignUpResponse;
 import com.capd.capdbackend.domain.patient.entity.PatientEntity;
+import com.capd.capdbackend.domain.patient.mapper.PatientInfoMapper;
 import com.capd.capdbackend.domain.patient.mapper.PatientSignUpMapper;
 import com.capd.capdbackend.domain.patient.repository.PatientRepository;
 import com.capd.capdbackend.domain.user.entity.UserEntity;
@@ -25,6 +27,7 @@ public class PatientService {
     private final PatientRepository patientRepository;
     private final PatientSignUpMapper patientSignUpMapper;
     private final PasswordEncoder passwordEncoder;
+    private final PatientInfoMapper patientInfoMapper;
 
     // 환자 회원가입
     @Transactional
@@ -60,5 +63,19 @@ public class PatientService {
 
         // entity -> response DTO
         return patientSignUpMapper.toResponse(savedPatient, savedUser);
+    }
+
+    // 환자 본인 회원 정보 조회
+    public PatientInfoResponse patientInfo(String email) {
+
+        // 유저 조회
+        PatientEntity patient = patientRepository.findByUserEmail(email)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // UserEntity 꺼내기
+        UserEntity user = patient.getUser();
+
+        // entity -> response dto
+        return patientInfoMapper.toResponse(patient, user);
     }
 }
