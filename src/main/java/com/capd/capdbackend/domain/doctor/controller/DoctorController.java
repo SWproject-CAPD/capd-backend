@@ -36,7 +36,7 @@ public class DoctorController {
     }
 
     // 본인 정보 조회 API
-    @Operation(summary = "의사 정보 조회", description = "의사가 본인의 정보 조회하는 API")
+    @Operation(summary = "의사 본인 정보 조회", description = "의사가 본인의 정보 조회하는 API")
     @GetMapping("/doctors/me")
     public ResponseEntity<BaseResponse<DoctorInfoResponse>> doctorInfo(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
