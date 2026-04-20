@@ -1,5 +1,6 @@
 package com.capd.capdbackend.domain.doctor.dto.response;
 
+import com.capd.capdbackend.domain.user.entity.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -27,6 +28,9 @@ public class DoctorInfoResponse {
 
     @Schema(description = "의사 전화번호", example = "010-1111-1111")
     private String phone;
+
+    @Schema(description = "권한", example = "DOCTOR")
+    private Role role;
 
     @Schema(description = "회원가입 날짜", example = "2026-04-20T13:40:00")
     private LocalDateTime createdAt;
