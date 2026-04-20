@@ -1,8 +1,10 @@
 package com.capd.capdbackend.domain.doctor.controller;
 
 import com.capd.capdbackend.domain.doctor.dto.request.DoctorSignUpRequest;
+import com.capd.capdbackend.domain.doctor.dto.request.PatientRegisterRequest;
 import com.capd.capdbackend.domain.doctor.dto.response.DoctorInfoResponse;
 import com.capd.capdbackend.domain.doctor.dto.response.DoctorSignUpResponse;
+import com.capd.capdbackend.domain.doctor.dto.response.PatientRegisterResponse;
 import com.capd.capdbackend.domain.doctor.service.DoctorService;
 import com.capd.capdbackend.global.response.BaseResponse;
 import com.capd.capdbackend.global.security.CustomUserDetails;
@@ -59,5 +61,19 @@ public class DoctorController {
 
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "의사 사용자 삭제 성공", null));
+    }
+
+    // 본인의 환자로 등록하는 API
+    @Operation(summary = "환자 등록 API", description = "의사가 환자의 전화번호를 이용해 본인의 환자로 등록하는 API")
+    @PostMapping("/doctors/patients")
+    public ResponseEntity<BaseResponse<PatientRegisterResponse>> patientRegister(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody @Valid PatientRegisterRequest request) {
+
+        // service 호출
+        PatientRegisterResponse patientRegister = doctorService.patientRegister(userDetails.getIdentifier(), request);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "환자 등록 성공", patientRegister));
     }
 }

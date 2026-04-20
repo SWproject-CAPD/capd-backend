@@ -1,13 +1,19 @@
 package com.capd.capdbackend.domain.doctor.service;
 
 import com.capd.capdbackend.domain.doctor.dto.request.DoctorSignUpRequest;
+import com.capd.capdbackend.domain.doctor.dto.request.PatientRegisterRequest;
 import com.capd.capdbackend.domain.doctor.dto.response.DoctorInfoResponse;
 import com.capd.capdbackend.domain.doctor.dto.response.DoctorSignUpResponse;
+import com.capd.capdbackend.domain.doctor.dto.response.PatientRegisterResponse;
 import com.capd.capdbackend.domain.doctor.entity.DoctorEntity;
 import com.capd.capdbackend.domain.doctor.exception.DoctorErrorCode;
 import com.capd.capdbackend.domain.doctor.mapper.DoctorInfoMapper;
 import com.capd.capdbackend.domain.doctor.mapper.DoctorSignUpMapper;
+import com.capd.capdbackend.domain.doctor.mapper.PatientRegisterMapper;
 import com.capd.capdbackend.domain.doctor.repository.DoctorRepository;
+import com.capd.capdbackend.domain.patient.entity.PatientEntity;
+import com.capd.capdbackend.domain.patient.exception.PatientErrorCode;
+import com.capd.capdbackend.domain.patient.repository.PatientRepository;
 import com.capd.capdbackend.domain.user.entity.UserEntity;
 import com.capd.capdbackend.domain.user.exception.UserErrorCode;
 import com.capd.capdbackend.domain.user.repository.UserRepository;
@@ -17,6 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import javax.print.Doc;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +37,8 @@ public class DoctorService {
     private final DoctorSignUpMapper doctorSignUpMapper;
     private final PasswordEncoder passwordEncoder;
     private final DoctorInfoMapper doctorInfoMapper;
+    private final PatientRepository patientRepository;
+    private final PatientRegisterMapper patientRegisterMapper;
 
     // 의사 회원가입
     @Transactional
@@ -101,5 +111,36 @@ public class DoctorService {
 
         // 삭제 성공하면 로그 출력
         log.info("의사 사용자 삭제 성공");
+    }
+
+    // 가입한 환자를 본인의 환자로 등록
+    @Transactional
+    public PatientRegisterResponse patientRegister(String licenseId, PatientRegisterRequest request) {
+
+        // 의사 정보 조회
+        DoctorEntity doctor = doctorRepository.findByLicenseId(licenseId)
+                .orElseThrow(() -> new CustomException(DoctorErrorCode.LICENSE_ID_NOT_FOUND));
+
+        // 전화번호로 사용자 조회
+        UserEntity user = userRepository.findByPhone(request.getPhone())
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 사용자 조회로 찾은 환자 정보 조회
+        PatientEntity patient = patientRepository.findByUser(user)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 이미 등록된 환자인지 확인
+        if (patient.getDoctor() != null) {
+            throw new CustomException(DoctorErrorCode.PATIENT_ALREADY_REGISTERED);
+        }
+
+        // 환자 객체에 의사를 등록
+        patient.assignDoctor(doctor);
+
+        // 로그 출력
+        log.info("환자 등록 성공: patientId={}", patient.getPatientId());
+
+        // entity -> response DTO
+        return patientRegisterMapper.toResponse(patient, user);
     }
 }
