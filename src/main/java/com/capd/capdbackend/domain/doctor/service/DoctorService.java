@@ -1,9 +1,11 @@
 package com.capd.capdbackend.domain.doctor.service;
 
 import com.capd.capdbackend.domain.doctor.dto.request.DoctorSignUpRequest;
+import com.capd.capdbackend.domain.doctor.dto.response.DoctorInfoResponse;
 import com.capd.capdbackend.domain.doctor.dto.response.DoctorSignUpResponse;
 import com.capd.capdbackend.domain.doctor.entity.DoctorEntity;
 import com.capd.capdbackend.domain.doctor.exception.DoctorErrorCode;
+import com.capd.capdbackend.domain.doctor.mapper.DoctorInfoMapper;
 import com.capd.capdbackend.domain.doctor.mapper.DoctorSignUpMapper;
 import com.capd.capdbackend.domain.doctor.repository.DoctorRepository;
 import com.capd.capdbackend.domain.user.entity.UserEntity;
@@ -26,6 +28,7 @@ public class DoctorService {
     private final DoctorRepository doctorRepository;
     private final DoctorSignUpMapper doctorSignUpMapper;
     private final PasswordEncoder passwordEncoder;
+    private final DoctorInfoMapper doctorInfoMapper;
 
     // 의사 회원가입
     @Transactional
@@ -63,5 +66,19 @@ public class DoctorService {
 
         // entity -> response DTO
         return doctorSignUpMapper.toResponse(savedDoctor, savedUser);
+    }
+
+    // 의사 본인 정보 조회 로직
+    public DoctorInfoResponse doctorInfo(String licenseId) {
+
+        // 유저 조회
+        DoctorEntity doctor = doctorRepository.findByLicenseId(licenseId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // UserEntity 꺼내기
+        UserEntity user = doctor.getUser();
+
+        // 응답 반환
+        return doctorInfoMapper.toResponse(doctor, user);
     }
 }
