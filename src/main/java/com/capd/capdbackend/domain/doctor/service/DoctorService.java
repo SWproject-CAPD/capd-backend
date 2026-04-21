@@ -2,16 +2,10 @@ package com.capd.capdbackend.domain.doctor.service;
 
 import com.capd.capdbackend.domain.doctor.dto.request.DoctorSignUpRequest;
 import com.capd.capdbackend.domain.doctor.dto.request.PatientRegisterRequest;
-import com.capd.capdbackend.domain.doctor.dto.response.DoctorInfoResponse;
-import com.capd.capdbackend.domain.doctor.dto.response.DoctorSignUpResponse;
-import com.capd.capdbackend.domain.doctor.dto.response.PatientAllSearchResponse;
-import com.capd.capdbackend.domain.doctor.dto.response.PatientRegisterResponse;
+import com.capd.capdbackend.domain.doctor.dto.response.*;
 import com.capd.capdbackend.domain.doctor.entity.DoctorEntity;
 import com.capd.capdbackend.domain.doctor.exception.DoctorErrorCode;
-import com.capd.capdbackend.domain.doctor.mapper.DoctorInfoMapper;
-import com.capd.capdbackend.domain.doctor.mapper.DoctorSignUpMapper;
-import com.capd.capdbackend.domain.doctor.mapper.PatientAllSearchMapper;
-import com.capd.capdbackend.domain.doctor.mapper.PatientRegisterMapper;
+import com.capd.capdbackend.domain.doctor.mapper.*;
 import com.capd.capdbackend.domain.doctor.repository.DoctorRepository;
 import com.capd.capdbackend.domain.patient.entity.PatientEntity;
 import com.capd.capdbackend.domain.patient.exception.PatientErrorCode;
@@ -44,6 +38,7 @@ public class DoctorService {
     private final PatientRepository patientRepository;
     private final PatientRegisterMapper patientRegisterMapper;
     private final PatientAllSearchMapper patientAllSearchMapper;
+    private final PatientProfileMapper patientProfileMapper;
 
     // 의사 회원가입
     @Transactional
@@ -174,5 +169,25 @@ public class DoctorService {
 
         // list 반환
         return list;
+    }
+
+    // 특정 환자 조회
+    public PatientProfileResponse patientProfile(String licenseId, Long patientId) {
+
+        // 의사가 존재하는지 확인
+        DoctorEntity doctor = doctorRepository.findByLicenseId(licenseId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 환자가 존재하는지 확인
+        PatientEntity patient = patientRepository.findByPatientId(patientId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 담당 의사 + 환자인지 확인
+        if (patient.getDoctor() == null || !patient.getDoctor().getDoctorId().equals(doctor.getDoctorId())) {
+            throw new CustomException(DoctorErrorCode.DOCTOR_NO_PERMISSION);
+        }
+
+        // entity -> dto
+        return patientProfileMapper.toResponse(patient, patient.getUser());
     }
 }
