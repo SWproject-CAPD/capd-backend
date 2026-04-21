@@ -1,10 +1,12 @@
 package com.capd.capdbackend.domain.patient.repository;
 
+import com.capd.capdbackend.domain.doctor.entity.DoctorEntity;
 import com.capd.capdbackend.domain.patient.entity.PatientEntity;
 import com.capd.capdbackend.domain.user.entity.UserEntity;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface PatientRepository extends JpaRepository<PatientEntity, Long> {
@@ -15,4 +17,8 @@ public interface PatientRepository extends JpaRepository<PatientEntity, Long> {
     // 이메일을 통해 환자 정보 가져오기
     @EntityGraph(attributePaths = {"user"})
     Optional<PatientEntity> findByUserEmail(String email);
+
+    // 한명의 의사가 담당하는 환자 목록 전체 보기
+    @EntityGraph(attributePaths = {"user"})
+    List<PatientEntity> findByDoctor(DoctorEntity doctor);
 }

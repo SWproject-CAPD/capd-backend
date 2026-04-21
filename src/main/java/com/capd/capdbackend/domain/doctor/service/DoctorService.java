@@ -4,11 +4,13 @@ import com.capd.capdbackend.domain.doctor.dto.request.DoctorSignUpRequest;
 import com.capd.capdbackend.domain.doctor.dto.request.PatientRegisterRequest;
 import com.capd.capdbackend.domain.doctor.dto.response.DoctorInfoResponse;
 import com.capd.capdbackend.domain.doctor.dto.response.DoctorSignUpResponse;
+import com.capd.capdbackend.domain.doctor.dto.response.PatientAllSearchResponse;
 import com.capd.capdbackend.domain.doctor.dto.response.PatientRegisterResponse;
 import com.capd.capdbackend.domain.doctor.entity.DoctorEntity;
 import com.capd.capdbackend.domain.doctor.exception.DoctorErrorCode;
 import com.capd.capdbackend.domain.doctor.mapper.DoctorInfoMapper;
 import com.capd.capdbackend.domain.doctor.mapper.DoctorSignUpMapper;
+import com.capd.capdbackend.domain.doctor.mapper.PatientAllSearchMapper;
 import com.capd.capdbackend.domain.doctor.mapper.PatientRegisterMapper;
 import com.capd.capdbackend.domain.doctor.repository.DoctorRepository;
 import com.capd.capdbackend.domain.patient.entity.PatientEntity;
@@ -25,6 +27,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.print.Doc;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +43,7 @@ public class DoctorService {
     private final DoctorInfoMapper doctorInfoMapper;
     private final PatientRepository patientRepository;
     private final PatientRegisterMapper patientRegisterMapper;
+    private final PatientAllSearchMapper patientAllSearchMapper;
 
     // 의사 회원가입
     @Transactional
@@ -142,5 +147,32 @@ public class DoctorService {
 
         // entity -> response DTO
         return patientRegisterMapper.toResponse(patient, user);
+    }
+
+    // 환자 목록 전체 보기
+    public List<PatientAllSearchResponse> patientAll(String licenseId) {
+
+        // 의사 유저 조회
+        DoctorEntity doctor = doctorRepository.findByLicenseId(licenseId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 환자 목록 전체 조회
+        List<PatientEntity> patients = patientRepository.findByDoctor(doctor);
+
+        // 변환된 dto 담을 빈 상자
+        List<PatientAllSearchResponse> list = new ArrayList<>();
+
+        // for문 돌면서 상자에 하나씩 담기
+        for (PatientEntity patient : patients) {
+
+            // entity -> dto 변환
+            PatientAllSearchResponse patientAllSearchResponse = patientAllSearchMapper.toResponse(patient, patient.getUser());
+
+            // list에 추가
+            list.add(patientAllSearchResponse);
+        }
+
+        // list 반환
+        return list;
     }
 }
