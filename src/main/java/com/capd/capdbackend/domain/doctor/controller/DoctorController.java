@@ -2,10 +2,7 @@ package com.capd.capdbackend.domain.doctor.controller;
 
 import com.capd.capdbackend.domain.doctor.dto.request.DoctorSignUpRequest;
 import com.capd.capdbackend.domain.doctor.dto.request.PatientRegisterRequest;
-import com.capd.capdbackend.domain.doctor.dto.response.DoctorInfoResponse;
-import com.capd.capdbackend.domain.doctor.dto.response.DoctorSignUpResponse;
-import com.capd.capdbackend.domain.doctor.dto.response.PatientAllSearchResponse;
-import com.capd.capdbackend.domain.doctor.dto.response.PatientRegisterResponse;
+import com.capd.capdbackend.domain.doctor.dto.response.*;
 import com.capd.capdbackend.domain.doctor.service.DoctorService;
 import com.capd.capdbackend.global.response.BaseResponse;
 import com.capd.capdbackend.global.security.CustomUserDetails;
@@ -91,5 +88,19 @@ public class DoctorController {
 
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "환자 전체 목록 조회 성공", patientAll));
+    }
+
+    // 담당 환자 특정 프로필 조회 API
+    @Operation(summary = "특정 환자 조회 API", description = "환자 고유번호로 담당 환자 프로필을 조회하는 API")
+    @GetMapping("/doctors/patients/{patient-id}")
+    public ResponseEntity<BaseResponse<PatientProfileResponse>> patientProfile(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("patient-id") Long patientId) {
+
+        // service 호출
+        PatientProfileResponse patientProfileResponse = doctorService.patientProfile(userDetails.getIdentifier(), patientId);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "담당 특정 환자 정보 조회 성공", patientProfileResponse));
     }
 }
