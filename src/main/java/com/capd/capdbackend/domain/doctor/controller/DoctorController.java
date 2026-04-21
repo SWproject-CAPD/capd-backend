@@ -4,6 +4,7 @@ import com.capd.capdbackend.domain.doctor.dto.request.DoctorSignUpRequest;
 import com.capd.capdbackend.domain.doctor.dto.request.PatientRegisterRequest;
 import com.capd.capdbackend.domain.doctor.dto.response.DoctorInfoResponse;
 import com.capd.capdbackend.domain.doctor.dto.response.DoctorSignUpResponse;
+import com.capd.capdbackend.domain.doctor.dto.response.PatientAllSearchResponse;
 import com.capd.capdbackend.domain.doctor.dto.response.PatientRegisterResponse;
 import com.capd.capdbackend.domain.doctor.service.DoctorService;
 import com.capd.capdbackend.global.response.BaseResponse;
@@ -15,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -75,5 +78,18 @@ public class DoctorController {
 
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "환자 등록 성공", patientRegister));
+    }
+
+    // 환자 목록 전체 조회 API
+    @Operation(summary = "환자 목록 전체 조회 API", description = "의사가 본인이 담당하는 환자 전체 조회하는 API")
+    @GetMapping("/doctors/patients")
+    public ResponseEntity<BaseResponse<List<PatientAllSearchResponse>>> patientAll(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        // service 호출
+        List<PatientAllSearchResponse> patientAll = doctorService.patientAll(userDetails.getIdentifier());
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "환자 전체 목록 조회 성공", patientAll));
     }
 }
