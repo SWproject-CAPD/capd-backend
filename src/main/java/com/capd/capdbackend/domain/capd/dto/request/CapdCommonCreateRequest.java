@@ -1,6 +1,7 @@
 package com.capd.capdbackend.domain.capd.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -14,6 +15,7 @@ import java.time.LocalDate;
 public class CapdCommonCreateRequest {
 
     @Schema(description = "투석 날짜", example = "2026-04-21")
+    @NotNull(message = "투석 날짜는 필수 입력값입니다.")
     private LocalDate date;
 
     @Schema(description = "배액 혼탁 여부", example = "false")
