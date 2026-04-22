@@ -1,6 +1,7 @@
 package com.capd.capdbackend.domain.capd.repository;
 
 import com.capd.capdbackend.domain.capd.entity.CapdCommonEntity;
+import com.capd.capdbackend.domain.capd.entity.CapdStatus;
 import com.capd.capdbackend.domain.patient.entity.PatientEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -15,4 +16,7 @@ public interface CapdCommonRepository extends JpaRepository<CapdCommonEntity, Lo
 
     // 의사나 환자가 투석 일지를 최신순으로 보고 싶을때
     List<CapdCommonEntity> findAllByPatientOrderByDateDesc(PatientEntity patient);
+
+    // 날짜 + status로 조회
+    Optional<CapdCommonEntity> findByPatientAndDateAndStatus(PatientEntity patient, LocalDate date, CapdStatus status);
 }

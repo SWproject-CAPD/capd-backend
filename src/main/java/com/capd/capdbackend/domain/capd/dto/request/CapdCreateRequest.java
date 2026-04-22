@@ -1,10 +1,12 @@
 package com.capd.capdbackend.domain.capd.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @NoArgsConstructor
@@ -12,7 +14,7 @@ import java.time.LocalDate;
 @Setter
 @Builder
 @AllArgsConstructor
-public class CapdCommonCreateRequest {
+public class CapdCreateRequest {
 
     @Schema(description = "투석 날짜", example = "2026-04-21")
     @NotNull(message = "투석 날짜는 필수 입력값입니다.")
@@ -38,4 +40,8 @@ public class CapdCommonCreateRequest {
 
     @Schema(description = "특이사항 메모", example = "오늘 컨디션이 좋습니다.")
     private String note;
+
+    @Schema(description = "세션 리스트 (1~5회차)")
+    @Valid
+    private List<CapdSessionCreateRequest> sessions;
 }

@@ -1,5 +1,6 @@
 package com.capd.capdbackend.domain.capd.dto.response;
 
+import com.capd.capdbackend.domain.capd.entity.CapdStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -45,8 +46,8 @@ public class CapdCommonResponse {
     @Schema(description = "특이사항 메모", example = "오늘 컨디션이 좋습니다.")
     private String note;
 
-    @Schema(description = "제출 완료 여부", example = "F")
-    private boolean isSubmitted; // 제출 완료 여부
+    @Schema(description = "상태 (TEMP / SUBMITTED", example = "TEMP")
+    private CapdStatus status;
 
     @Schema(description = "세션 리스트", example = "1회차, 2회차...")
     private List<CapdSessionResponse> sessions;
