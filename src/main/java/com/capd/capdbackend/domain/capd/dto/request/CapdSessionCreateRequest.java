@@ -1,6 +1,9 @@
 package com.capd.capdbackend.domain.capd.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -15,10 +18,13 @@ import java.time.LocalTime;
 public class CapdSessionCreateRequest {
 
     @Schema(description = "투석 날짜", example = "2026-04-21")
+    @NotNull(message = "투석 날짜는 필수 입력값입니다.")
     private LocalDate date;
 
     @Schema(description = "교환 회차 (1~5)", example = "1")
-    private int sessionNumber;
+    @Min(value = 1, message = "세션 번호는 1 이상이어야 합니다.")
+    @Max(value = 5, message = "세션 번호는 5 이하이어야 합니다.")
+    private Integer sessionNumber;
 
     @Schema(description = "교환 시작 시간", example = "10:30:00")
     private LocalTime exchangeTime;
