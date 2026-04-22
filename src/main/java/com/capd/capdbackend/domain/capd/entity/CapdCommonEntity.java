@@ -1,6 +1,6 @@
 package com.capd.capdbackend.domain.capd.entity;
 
-import com.capd.capdbackend.domain.capd.dto.request.CapdCommonCreateRequest;
+import com.capd.capdbackend.domain.capd.dto.request.CapdCreateRequest;
 import com.capd.capdbackend.domain.patient.entity.PatientEntity;
 import com.capd.capdbackend.global.common.BaseTimeEntity;
 import jakarta.persistence.*;
@@ -55,8 +55,10 @@ public class CapdCommonEntity extends BaseTimeEntity {
     private LocalDate date; // 해당 일지 날짜
 
     @Setter
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private boolean isSubmitted = false; // 제출 상태 필드, 기본값은 false
+    @Builder.Default
+    private CapdStatus status = CapdStatus.TEMP; // 기본값 임시저장
 
     @Builder.Default
     @OneToMany(mappedBy = "capdCommon", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -70,7 +72,7 @@ public class CapdCommonEntity extends BaseTimeEntity {
     }
 
     // 공통 투석일지 정보 업데이트 메서드
-    public void updateCommonInfo(CapdCommonCreateRequest request) {
+    public void updateCommonInfo(CapdCreateRequest request) {
         this.cloudyDialysate = request.isCloudyDialysate();
         this.urinationCount = request.getUrinationCount();
         this.bodyWeight = request.getBodyWeight();

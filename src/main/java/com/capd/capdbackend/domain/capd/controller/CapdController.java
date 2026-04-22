@@ -1,6 +1,6 @@
 package com.capd.capdbackend.domain.capd.controller;
 
-import com.capd.capdbackend.domain.capd.dto.request.CapdCommonCreateRequest;
+import com.capd.capdbackend.domain.capd.dto.request.CapdCreateRequest;
 import com.capd.capdbackend.domain.capd.dto.request.CapdSessionCreateRequest;
 import com.capd.capdbackend.domain.capd.dto.response.CapdCommonResponse;
 import com.capd.capdbackend.domain.capd.dto.response.CapdSessionResponse;
@@ -25,32 +25,40 @@ public class CapdController {
 
     private final CapdService capdService;
 
-    // 공통 투석일지 제출 API
-    @Operation(summary = "공통 투석일지 제출", description = "그날의 체중, 혈당, 메모 등 공통 정보를 제출하는 API")
-    @PostMapping("/capds/commons/{patient-id}")
-    public ResponseEntity<BaseResponse<CapdCommonResponse>> capdCommon(
-            @RequestBody @Valid CapdCommonCreateRequest request,
+    // 임시저장
+    @Operation(summary = "투석일지 임시저장",
+            description = "작성 중인 투석일지를 임시저장. 나갔다 들어와도 데이터 유지됨")
+    @PostMapping("/capds/{patient-id}/temp")
+    public ResponseEntity<BaseResponse<CapdCommonResponse>> tempSaveCapd(
+            @RequestBody @Valid CapdCreateRequest request,
             @PathVariable("patient-id") Long patientId) {
 
-        // service 호출
-        CapdCommonResponse capdCommonCreateResponse = capdService.createCommonCapd(patientId, request);
-
-        // 응답 반환
-        return ResponseEntity.ok(BaseResponse.success(201, "공통 투석일지 제출 성공", capdCommonCreateResponse));
+        CapdCommonResponse response = capdService.saveCapd(patientId, request);
+        return ResponseEntity.ok(BaseResponse.success(200, "임시저장 성공", response));
     }
 
-    // 세션 투석일지 제출 API
-    @Operation(summary = "세션 투석일지 제출", description = "공통 투석일지 정보를 제외한 세션 투석일지 정보를 제출하는 API (1~5회차 제출로 구성)")
-    @PostMapping("/capds/sessions/{patient-id}")
-    public ResponseEntity<BaseResponse<CapdSessionResponse>> capdSession(
-            @RequestBody @Valid CapdSessionCreateRequest request,
+    // 임시저장 데이터 불러오기
+    @Operation(summary = "임시저장 데이터 조회",
+            description = "페이지 진입 시 당일 임시저장 데이터가 있으면 불러옴")
+    @GetMapping("/capds/{patient-id}/temp")
+    public ResponseEntity<BaseResponse<CapdCommonResponse>> getTempCapd(
+            @PathVariable("patient-id") Long patientId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+
+        CapdCommonResponse response = capdService.getTempCapd(patientId, date);
+        return ResponseEntity.ok(BaseResponse.success(200, "임시저장 데이터 조회 성공", response));
+    }
+
+    // 최종 제출 (마감하기)
+    @Operation(summary = "투석일지 최종 제출",
+            description = "오늘 하루 기록 마감하기 버튼. 공통 + 세션 한 번에 제출")
+    @PostMapping("/capds/{patient-id}")
+    public ResponseEntity<BaseResponse<CapdCommonResponse>> submitCapd(
+            @RequestBody @Valid CapdCreateRequest request,
             @PathVariable("patient-id") Long patientId) {
 
-        // service 호출
-        CapdSessionResponse capdSessionCreateResponse = capdService.createSessionCapd(patientId, request);
-
-        // 응답 반환
-        return ResponseEntity.ok(BaseResponse.success(201, "세션 투석일지 제출 성공", capdSessionCreateResponse));
+        CapdCommonResponse response = capdService.submitCapd(patientId, request);
+        return ResponseEntity.ok(BaseResponse.success(201, "투석일지 제출 성공", response));
     }
 
     // 전체 투석일지 조회
