@@ -10,7 +10,8 @@ import org.springframework.http.HttpStatus;
 public enum PatientErrorCode implements BaseErrorCode {
 
     PATIENT_DUPLICATE("P4001", HttpStatus.CONFLICT, "중복된 환자 정보입니다."),
-    PATIENT_NOT_FOUND("P4002", HttpStatus.NOT_FOUND, "환자 정보를 찾을 수 없습니다");
+    PATIENT_NOT_FOUND("P4002", HttpStatus.NOT_FOUND, "환자 정보를 찾을 수 없습니다"),
+    PATIENT_NO_PERMISSION("P4003", HttpStatus.FORBIDDEN, "접근할 수 없는 환자 정보입니다.");
 
     private final String code;
     private final HttpStatus status;
