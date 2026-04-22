@@ -7,7 +7,7 @@ import com.capd.capdbackend.domain.capd.entity.CapdSessionEntity;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CapdSessionCreateMapper {
+public class CapdSessionMapper {
 
     // dto -> entity
     public CapdSessionEntity toSessionEntity(CapdSessionCreateRequest request, CapdCommonEntity common) {

@@ -13,9 +13,9 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
-public class CapdCommonCreateMapper {
+public class CapdCommonMapper {
 
-    private final CapdSessionCreateMapper capdSessionCreateMapper;
+    private final CapdSessionMapper capdSessionMapper;
 
     // dto -> entity
     public CapdCommonEntity toCommonEntity(CapdCommonCreateRequest request, PatientEntity patient) {
@@ -38,7 +38,7 @@ public class CapdCommonCreateMapper {
 
         // session 리스트를 mapper 이용해서 dto list로 변환
         List<CapdSessionResponse> list = entity.getSessions().stream()
-                .map(capdSessionCreateMapper::toSessionResponse)
+                .map(capdSessionMapper::toSessionResponse)
                 .collect(Collectors.toList());
 
         return CapdCommonResponse.builder()
