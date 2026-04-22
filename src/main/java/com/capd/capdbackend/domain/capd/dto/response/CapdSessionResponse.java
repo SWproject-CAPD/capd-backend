@@ -11,7 +11,7 @@ import java.time.LocalTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(title = "세션 투석일지 응답 dto", description = "환자가 세션 투석일지를 제출할때 서버가 반환하는 데이터")
-public class CapdSessionCreateResponse {
+public class CapdSessionResponse {
 
     @Schema(description = "세션 투석일지 고유번호", example = "1")
     private Long capdSessionId;

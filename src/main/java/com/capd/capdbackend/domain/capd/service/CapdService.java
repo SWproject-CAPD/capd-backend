@@ -2,8 +2,8 @@ package com.capd.capdbackend.domain.capd.service;
 
 import com.capd.capdbackend.domain.capd.dto.request.CapdCommonCreateRequest;
 import com.capd.capdbackend.domain.capd.dto.request.CapdSessionCreateRequest;
-import com.capd.capdbackend.domain.capd.dto.response.CapdCommonCreateResponse;
-import com.capd.capdbackend.domain.capd.dto.response.CapdSessionCreateResponse;
+import com.capd.capdbackend.domain.capd.dto.response.CapdCommonResponse;
+import com.capd.capdbackend.domain.capd.dto.response.CapdSessionResponse;
 import com.capd.capdbackend.domain.capd.entity.CapdCommonEntity;
 import com.capd.capdbackend.domain.capd.entity.CapdSessionEntity;
 import com.capd.capdbackend.domain.capd.exception.CapdErrorCode;
@@ -14,14 +14,12 @@ import com.capd.capdbackend.domain.capd.repository.CapdSessionRepository;
 import com.capd.capdbackend.domain.patient.entity.PatientEntity;
 import com.capd.capdbackend.domain.patient.repository.PatientRepository;
 import com.capd.capdbackend.domain.user.exception.UserErrorCode;
-import com.capd.capdbackend.domain.user.repository.UserRepository;
 import com.capd.capdbackend.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.Optional;
 
 @Service
@@ -38,7 +36,7 @@ public class CapdService {
 
     // 세션 투석일지 제출
     @Transactional
-    public CapdCommonCreateResponse createCommonCapd(Long patientId, CapdCommonCreateRequest request) {
+    public CapdCommonResponse createCommonCapd(Long patientId, CapdCommonCreateRequest request) {
 
         // 환자 확인
         PatientEntity patient = patientRepository.findByPatientId(patientId)
@@ -68,7 +66,7 @@ public class CapdService {
 
     // 회차별 세션 투석일지 제출
     @Transactional
-    public CapdSessionCreateResponse createSessionCapd(Long patientId, CapdSessionCreateRequest request) {
+    public CapdSessionResponse createSessionCapd(Long patientId, CapdSessionCreateRequest request) {
 
         // 환자 조회
         PatientEntity patient = patientRepository.findByPatientId(patientId)
