@@ -12,7 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(title = "투석일지 응답 dto", description = "환자가 투석일지를 제출할때 서버가 반환하는 데이터")
-public class CapdCommonCreateResponse {
+public class CapdCommonResponse {
 
     // 공통 투석 일지
     @Schema(description = "투석일지 고유번호", example = "1")
@@ -49,5 +49,5 @@ public class CapdCommonCreateResponse {
     private boolean isSubmitted; // 제출 완료 여부
 
     @Schema(description = "세션 리스트", example = "1회차, 2회차...")
-    private List<CapdSessionCreateResponse> sessions;
+    private List<CapdSessionResponse> sessions;
 }

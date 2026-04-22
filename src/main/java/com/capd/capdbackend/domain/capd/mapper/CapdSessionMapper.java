@@ -1,14 +1,13 @@
 package com.capd.capdbackend.domain.capd.mapper;
 
 import com.capd.capdbackend.domain.capd.dto.request.CapdSessionCreateRequest;
-import com.capd.capdbackend.domain.capd.dto.response.CapdCommonCreateResponse;
-import com.capd.capdbackend.domain.capd.dto.response.CapdSessionCreateResponse;
+import com.capd.capdbackend.domain.capd.dto.response.CapdSessionResponse;
 import com.capd.capdbackend.domain.capd.entity.CapdCommonEntity;
 import com.capd.capdbackend.domain.capd.entity.CapdSessionEntity;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CapdSessionCreateMapper {
+public class CapdSessionMapper {
 
     // dto -> entity
     public CapdSessionEntity toSessionEntity(CapdSessionCreateRequest request, CapdCommonEntity common) {
@@ -28,8 +27,8 @@ public class CapdSessionCreateMapper {
     }
 
     // entity -> dto
-    public CapdSessionCreateResponse toSessionResponse(CapdSessionEntity session) {
-        return CapdSessionCreateResponse.builder()
+    public CapdSessionResponse toSessionResponse(CapdSessionEntity session) {
+        return CapdSessionResponse.builder()
                 .capdSessionId(session.getCapdSessionId())
                 .sessionNumber(session.getSessionNumber())
                 .exchangeTime(session.getExchangeTime())

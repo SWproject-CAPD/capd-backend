@@ -1,8 +1,8 @@
 package com.capd.capdbackend.domain.capd.mapper;
 
 import com.capd.capdbackend.domain.capd.dto.request.CapdCommonCreateRequest;
-import com.capd.capdbackend.domain.capd.dto.response.CapdCommonCreateResponse;
-import com.capd.capdbackend.domain.capd.dto.response.CapdSessionCreateResponse;
+import com.capd.capdbackend.domain.capd.dto.response.CapdCommonResponse;
+import com.capd.capdbackend.domain.capd.dto.response.CapdSessionResponse;
 import com.capd.capdbackend.domain.capd.entity.CapdCommonEntity;
 import com.capd.capdbackend.domain.patient.entity.PatientEntity;
 import lombok.RequiredArgsConstructor;
@@ -13,9 +13,9 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
-public class CapdCommonCreateMapper {
+public class CapdCommonMapper {
 
-    private final CapdSessionCreateMapper capdSessionCreateMapper;
+    private final CapdSessionMapper capdSessionMapper;
 
     // dto -> entity
     public CapdCommonEntity toCommonEntity(CapdCommonCreateRequest request, PatientEntity patient) {
@@ -34,14 +34,14 @@ public class CapdCommonCreateMapper {
     }
 
     // entity -> dto
-    public CapdCommonCreateResponse toCommonResponse(CapdCommonEntity entity) {
+    public CapdCommonResponse toCommonResponse(CapdCommonEntity entity) {
 
         // session 리스트를 mapper 이용해서 dto list로 변환
-        List<CapdSessionCreateResponse> list = entity.getSessions().stream()
-                .map(capdSessionCreateMapper::toSessionResponse)
+        List<CapdSessionResponse> list = entity.getSessions().stream()
+                .map(capdSessionMapper::toSessionResponse)
                 .collect(Collectors.toList());
 
-        return CapdCommonCreateResponse.builder()
+        return CapdCommonResponse.builder()
                 .capdId(entity.getCapdId())
                 .date(entity.getDate())
                 .cloudyDialysate(entity.isCloudyDialysate())

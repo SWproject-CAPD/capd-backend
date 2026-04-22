@@ -4,10 +4,7 @@ import com.capd.capdbackend.domain.capd.dto.request.CapdCommonCreateRequest;
 import com.capd.capdbackend.domain.patient.entity.PatientEntity;
 import com.capd.capdbackend.global.common.BaseTimeEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
@@ -57,6 +54,7 @@ public class CapdCommonEntity extends BaseTimeEntity {
     @Column(nullable = false)
     private LocalDate date; // 해당 일지 날짜
 
+    @Setter
     @Column(nullable = false)
     private boolean isSubmitted = false; // 제출 상태 필드, 기본값은 false
 
