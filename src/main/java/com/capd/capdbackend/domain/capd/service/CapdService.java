@@ -68,16 +68,16 @@ public class CapdService {
 
     // 회차별 세션 투석일지 제출
     @Transactional
-    public CapdSessionCreateResponse createSessionCapd(Long patientId, LocalDate date, CapdSessionCreateRequest request) {
+    public CapdSessionCreateResponse createSessionCapd(Long patientId, CapdSessionCreateRequest request) {
 
         // 환자 조회
         PatientEntity patient = patientRepository.findByPatientId(patientId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-        //
-        CapdCommonEntity common = capdCommonRepository.findByPatientAndDate(patient, date)
+        // 공통 부모일지 찾거나 생성
+        CapdCommonEntity common = capdCommonRepository.findByPatientAndDate(patient, request.getDate())
                 .orElseGet(() -> {
-                    CapdCommonCreateRequest defaultRequest = CapdCommonCreateRequest.builder().date(date).build();
+                    CapdCommonCreateRequest defaultRequest = CapdCommonCreateRequest.builder().date(request.getDate()).build(); // 🌟 수정
                     return capdCommonRepository.save(capdCommonCreateMapper.toCommonEntity(defaultRequest, patient));
                 });
 

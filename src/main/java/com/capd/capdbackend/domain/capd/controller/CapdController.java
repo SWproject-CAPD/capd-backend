@@ -43,11 +43,10 @@ public class CapdController {
     @PostMapping("/capds/sessions/{patient-id}")
     public ResponseEntity<BaseResponse<CapdSessionCreateResponse>> capdSession(
             @RequestBody @Valid CapdSessionCreateRequest request,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @PathVariable("patient-id") Long patientId) {
 
         // service 호출
-        CapdSessionCreateResponse capdSessionCreateResponse = capdService.createSessionCapd(patientId, date, request);
+        CapdSessionCreateResponse capdSessionCreateResponse = capdService.createSessionCapd(patientId, request);
 
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(201, "세션 투석일지 제출 성공", capdSessionCreateResponse));
