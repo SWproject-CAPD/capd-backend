@@ -110,7 +110,7 @@ public class CapdController {
     }
 
     // 날짜 + 회차로 특정 세션 조회
-    @Operation(summary = "특정 세션 조회", description = "날짜 + 회차 번호로 특정 세션 단건 조회하는 API")
+    @Operation(summary = "날짜로 특정 세션 조회", description = "날짜 + 회차 번호로 특정 세션 단건 조회하는 API")
     @GetMapping("/capds/sessions")
     public ResponseEntity<BaseResponse<CapdSessionResponse>> capdSessionRead(
             @AuthenticationPrincipal CustomUserDetails userDetails,
