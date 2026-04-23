@@ -39,179 +39,189 @@ public class CapdService {
     private final CapdCommonMapper capdCommonMapper;
     private final CapdSessionMapper capdSessionMapper;
 
-    // 임시저장
+    // 임시저장 (공통 + 세션 같이 or 세션만)
     @Transactional
-    public CapdCommonResponse saveCapd(Long patientId, CapdCreateRequest request) {
+    public CapdCommonResponse saveCapd(String email, CapdCreateRequest request) {
 
-        PatientEntity patient = patientRepository.findByPatientId(patientId)
-                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+        // 환자 유저 조회
+        PatientEntity patient = patientRepository.findByUserEmail(email)
+                .orElseThrow(()-> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-        // 당일 SUBMITTED 상태면 임시저장 불가
-        Optional<CapdCommonEntity> existCapd =
-                capdCommonRepository.findByPatientAndDate(patient, request.getDate());
+        // 해당 날짜에 작성된 투석일지가 있는지 확인
+        Optional<CapdCommonEntity> existCapd = capdCommonRepository.findByPatientAndDate(patient, request.getDate());
 
-        if (existCapd.isPresent() &&
-                existCapd.get().getStatus() == CapdStatus.SUBMITTED) {
+        // 최종 제출 상태면 수정 불가
+        if (existCapd.isPresent() && existCapd.get().getStatus() == CapdStatus.SUBMITTED) {
             throw new CustomException(CapdErrorCode.ALREADY_SUBMITTED);
         }
 
         CapdCommonEntity common;
 
+        // 기존 임시저장 데이터가 있으면 내용 업데이트
         if (existCapd.isPresent()) {
-            // 기존 TEMP 있으면 덮어쓰기
             common = existCapd.get();
             common.updateCommonInfo(request);
-
-            // 기존 세션 전부 지우고 다시 저장
-            common.getSessions().clear();
-        } else {
-            // 없으면 새로 생성
+        }
+        // 기존 임시 저장 데이터가 없으면 새로 생성 db 저장
+        else {
             common = capdCommonMapper.toTempEntity(request, patient);
             capdCommonRepository.save(common);
         }
 
-        // 세션 저장
-        saveSessions(request, common);
+        if (request.getSessions() != null && !request.getSessions().isEmpty()) {
+            for (CapdSessionCreateRequest sessionRequest : request.getSessions()) {
 
+                // 해당 회차 번호가 이미 존재하는지 확인
+                if (capdSessionRepository.existsByCapdCommonAndSessionNumber(common, sessionRequest.getSessionNumber())) {
+                    throw new CustomException(CapdErrorCode.ALREADY_EXIST_SESSION);
+                }
+                CapdSessionEntity session = capdSessionMapper.toSessionEntity(sessionRequest, common);
+                capdSessionRepository.save(session);
+                common.getSessions().add(session);
+            }
+
+            // 총 초여과량 다시 계산
+            common.calculateTotalUltrafiltration();
+        }
+
+        // entity -> dto
+        return capdCommonMapper.toCommonResponse(common);
+    }
+
+    // 임시저장 데이터 불러오기
+    public CapdCommonResponse getTempCapd(String email, LocalDate date) {
+
+        // 환자 유저 조회
+        PatientEntity patient = patientRepository.findByUserEmail(email)
+                .orElseThrow(()-> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 해당 날짜이면서 상태가 임시저장인 투석일지 조회
+        CapdCommonEntity common = capdCommonRepository.findByPatientAndDateAndStatus(patient, date, CapdStatus.TEMP)
+                .orElseThrow(() -> new CustomException(CapdErrorCode.CAPD_NOT_FOUND));
+
+        // entity -> dto
         return capdCommonMapper.toCommonResponse(common);
     }
 
     // 최종 제출 (마감하기)
     @Transactional
-    public CapdCommonResponse submitCapd(Long patientId, CapdCreateRequest request) {
+    public CapdCommonResponse submitCapd(String email, CapdCreateRequest request) {
 
-        PatientEntity patient = patientRepository.findByPatientId(patientId)
-                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+        // 환자 유저 조회
+        PatientEntity patient = patientRepository.findByUserEmail(email)
+                .orElseThrow(()-> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-        // 당일 SUBMITTED 상태면 재제출 불가
-        Optional<CapdCommonEntity> existCapd =
-                capdCommonRepository.findByPatientAndDate(patient, request.getDate());
+        // 해당 날짜 투석일지 조회
+        Optional<CapdCommonEntity> existCapd = capdCommonRepository.findByPatientAndDate(patient, request.getDate());
 
-        if (existCapd.isPresent() &&
-                existCapd.get().getStatus() == CapdStatus.SUBMITTED) {
+        // 이미 최종 제출됐으면 재제출 불가
+        if (existCapd.isPresent() && existCapd.get().getStatus() == CapdStatus.SUBMITTED) {
             throw new CustomException(CapdErrorCode.ALREADY_SUBMITTED);
         }
 
         CapdCommonEntity common;
 
+        // 기존 임시저장 투석일지 데이터가 있으면 덮어쓰기
         if (existCapd.isPresent()) {
-            // 임시저장 있으면 덮어쓰고 SUBMITTED 로 변경
+            // 임시저장 있으면 공통 정보 업데이트 + 세션 전부 지우고 재저장
             common = existCapd.get();
             common.updateCommonInfo(request);
+
+            // DB 삭제
+            capdSessionRepository.deleteAll(common.getSessions());
             common.getSessions().clear();
         } else {
-            // 없으면 새로 생성
+            // 임시저장 없이 바로 제출하는 경우
             common = capdCommonMapper.toSubmitEntity(request, patient);
             capdCommonRepository.save(common);
         }
 
-        // status SUBMITTED 로 변경
+        // 제출 완료로 변경
         common.setStatus(CapdStatus.SUBMITTED);
 
-        // 세션 저장
-        saveSessions(request, common);
-
-        return capdCommonMapper.toCommonResponse(common);
-    }
-
-    // 임시저장 데이터 불러오기
-    public CapdCommonResponse getTempCapd(Long patientId, LocalDate date) {
-
-        PatientEntity patient = patientRepository.findByPatientId(patientId)
-                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
-
-        CapdCommonEntity common = capdCommonRepository
-                .findByPatientAndDateAndStatus(patient, date, CapdStatus.TEMP)
-                .orElseThrow(() -> new CustomException(CapdErrorCode.CAPD_NOT_FOUND));
-
-        return capdCommonMapper.toCommonResponse(common);
-    }
-
-    // 세션 저장 공통 메서드 (private)
-    private void saveSessions(CapdCreateRequest request, CapdCommonEntity common) {
+        // 세션 전체 저장
         if (request.getSessions() != null && !request.getSessions().isEmpty()) {
             for (CapdSessionCreateRequest sessionRequest : request.getSessions()) {
                 CapdSessionEntity session = capdSessionMapper.toSessionEntity(sessionRequest, common);
                 capdSessionRepository.save(session);
                 common.getSessions().add(session);
             }
+
+            // 총 초여과량 다시 계산
             common.calculateTotalUltrafiltration();
         }
+
+        // entity -> dto
+        return capdCommonMapper.toCommonResponse(common);
     }
 
-    // 투석일지 전체 목록 조회
-    public List<CapdCommonResponse> capdAllRead(Long patientId) {
+    // 전체 목록 조회
+    public List<CapdCommonResponse> capdAllReadForPatient(String email) {
 
         // 환자 유저 조회
-        PatientEntity patient = patientRepository.findByPatientId(patientId)
-                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+        PatientEntity patient = patientRepository.findByUserEmail(email)
+                .orElseThrow(()-> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-        // 해당 환자 투석일지 최신순으로 가져오기
+        // 환자 투석 일지를 최신순으로 조회
         List<CapdCommonEntity> list = capdCommonRepository.findAllByPatientOrderByDateDesc(patient);
 
-        // 변환된 dto 담을 빈 상자
+        // entity 리스트 -> dto 리스트로 변환
         List<CapdCommonResponse> resultList = new ArrayList<>();
-
         for (CapdCommonEntity capdCommon : list) {
-
-            // entity -> dto 변환
-            CapdCommonResponse capdCommonResponse = capdCommonMapper.toCommonResponse(capdCommon);
-
-            // list에 추가
-            resultList.add(capdCommonResponse);
+            resultList.add(capdCommonMapper.toCommonResponse(capdCommon));
         }
 
-        // list 반환
+        // 응답 반환
         return resultList;
     }
 
-    // 날짜 이용한 투석일지 단건 조회
-    public CapdCommonResponse capdProfileRead(Long patientId, LocalDate date) {
+    // 날짜로 단건 조회
+    public CapdCommonResponse capdProfileRead(String email, LocalDate date) {
 
-        // 환자 유저 확인
-        PatientEntity patient = patientRepository.findByPatientId(patientId)
-                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+        // 환자 유저 조회
+        PatientEntity patient = patientRepository.findByUserEmail(email)
+                .orElseThrow(()-> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-        // 날짜로 투석일지가 있는지 확인
+        // 날짜를 기준으로 해당 투석일지 조회
         CapdCommonEntity capdCommon = capdCommonRepository.findByPatientAndDate(patient, date)
                 .orElseThrow(() -> new CustomException(CapdErrorCode.CAPD_NOT_FOUND));
 
-        // entity -> dto 변환
+        // entity -> dto
         return capdCommonMapper.toCommonResponse(capdCommon);
     }
 
-    // 날짜 이용한 환자가 작성한 해당 날짜의 특정 세션 투석일지 조회
-    public CapdSessionResponse capdSessionRead(Long patientId, LocalDate date, int sessionNumber) {
+    // 날짜 + 회차로 특정 세션 조회
+    public CapdSessionResponse capdSessionRead(String email, LocalDate date, int sessionNumber) {
 
         // 환자 유저 조회
-        PatientEntity patient = patientRepository.findByPatientId(patientId)
-                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+        PatientEntity patient = patientRepository.findByUserEmail(email)
+                .orElseThrow(()-> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-        // 해당 날짜의 공통 일지를 찾기
+        // 날짜로 공통 투석일지 조회
         CapdCommonEntity common = capdCommonRepository.findByPatientAndDate(patient, date)
                 .orElseThrow(() -> new CustomException(CapdErrorCode.CAPD_NOT_FOUND));
 
-        // 공통 투석일지 해당된 특정 회차(1~5) 세션 투석일지을 찾기
+        // 찾아낸 공통 투석일지와 회차 세션 투석일지 번호로 특정 세션 투석일지 조회
         CapdSessionEntity session = capdSessionRepository.findByCapdCommonAndSessionNumber(common, sessionNumber)
                 .orElseThrow(() -> new CustomException(CapdErrorCode.CAPD_SESSION_NOT_FOUND));
 
-        // entity -> dto 변환
+        // entity -> dto
         return capdSessionMapper.toSessionResponse(session);
     }
 
-    // 공통 투석일지 고유 ID로 투석일지 조회
-    public CapdCommonResponse capdIDCommonRead(Long patientId, Long capdId) {
+    // 공통 일지 ID로 단건 조회
+    public CapdCommonResponse capdIDCommonRead(String email, Long capdId) {
 
         // 환자 유저 조회
-        PatientEntity patient = patientRepository.findByPatientId(patientId)
-                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+        PatientEntity patient = patientRepository.findByUserEmail(email)
+                .orElseThrow(()-> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-        // 투석일지 조회
+        // 공통 투석일지 id로 조회
         CapdCommonEntity common = capdCommonRepository.findById(capdId)
                 .orElseThrow(() -> new CustomException(CapdErrorCode.CAPD_NOT_FOUND));
 
-        // 조회된 투석일지가 요청한 환자의 것이 맞는지 확인
-        if (!common.getPatient().getPatientId().equals(patientId)) {
+        // 조회하는 투석일지 작성자와 요청한 환자가 일치하는지 확인
+        if (!common.getPatient().getPatientId().equals(patient.getPatientId())) {
             throw new CustomException(PatientErrorCode.PATIENT_NO_PERMISSION);
         }
 
@@ -219,23 +229,72 @@ public class CapdService {
         return capdCommonMapper.toCommonResponse(common);
     }
 
-    // 세션 투석일지 고유 ID(PK)로 조회
-    public CapdSessionResponse capdSessionIdRead(Long patientId, Long capdSessionId) {
+    // 세션 ID로 단건 조회
+    public CapdSessionResponse capdSessionIdRead(String email, Long capdSessionId) {
 
-        // 환자 유저 조회
-        PatientEntity patient = patientRepository.findByPatientId(patientId)
-                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+        // 환자 유저 확인
+        PatientEntity patient = patientRepository.findByUserEmail(email)
+                .orElseThrow(()-> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-        // 투석일지 조회
+        // 세션 투석일지 id로 조회
         CapdSessionEntity session = capdSessionRepository.findById(capdSessionId)
                 .orElseThrow(() -> new CustomException(CapdErrorCode.CAPD_SESSION_NOT_FOUND));
 
-        // 해당 세션 투석일지의 부모 투석 일지가 요청한 환자의 것이 맞는지 확인
-        if (!session.getCapdCommon().getPatient().getPatientId().equals(patientId)) {
+        // 해당 세션 투석일지의 주인이 본인이 맞는지 확인
+        if (!session.getCapdCommon().getPatient().getPatientId().equals(patient.getPatientId())) {
             throw new CustomException(PatientErrorCode.PATIENT_NO_PERMISSION);
         }
 
         // entity -> dto
         return capdSessionMapper.toSessionResponse(session);
+    }
+
+    // 세션 투석일지 삭제
+    @Transactional
+    public void deleteCapdSession(String email, Long sessionId) {
+
+        // 환자 유저 조회
+        PatientEntity patient = patientRepository.findByUserEmail(email)
+                .orElseThrow(()-> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 세션 투석일지 조회
+        CapdSessionEntity capdSession = capdSessionRepository.findByCapdSessionId(sessionId)
+                .orElseThrow(() -> new CustomException(CapdErrorCode.CAPD_SESSION_NOT_FOUND));
+
+        // 권한 확인
+        CapdCommonEntity common = capdSession.getCapdCommon();
+        if (!common.getPatient().getPatientId().equals(patient.getPatientId())) {
+            throw new CustomException(PatientErrorCode.PATIENT_NO_PERMISSION);
+        }
+
+        // 부모 리스트에서 삭제
+        common.getSessions().remove(capdSession);
+
+        // db에서 삭제
+        capdSessionRepository.delete(capdSession);
+
+        // 총초여과량 다시 계산
+        common.calculateTotalUltrafiltration();
+    }
+
+    // 투석일지 삭제
+    @Transactional
+    public void deleteCapdCommon(String email, Long capdId) {
+
+        // 환자 유저 조회
+        PatientEntity patient = patientRepository.findByUserEmail(email)
+                .orElseThrow(()-> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 투석일지 조회
+        CapdCommonEntity capdCommon = capdCommonRepository.findByCapdId(capdId)
+                .orElseThrow(() -> new CustomException(CapdErrorCode.CAPD_NOT_FOUND));
+
+        // 권한 체크
+        if (!capdCommon.getPatient().getPatientId().equals(patient.getPatientId())) {
+            throw new CustomException(PatientErrorCode.PATIENT_NO_PERMISSION);
+        }
+
+        // 삭제
+        capdCommonRepository.delete(capdCommon);
     }
 }
