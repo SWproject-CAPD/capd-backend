@@ -20,6 +20,6 @@ public interface CapdCommonRepository extends JpaRepository<CapdCommonEntity, Lo
     // 날짜 + status로 조회
     Optional<CapdCommonEntity> findByPatientAndDateAndStatus(PatientEntity patient, LocalDate date, CapdStatus status);
 
-    // 제출하지 않은 임시저장 데이터는 안보이게 하기
-    List<CapdCommonEntity> findAllByPatientAndStatusNotOrderByDateDesc(PatientEntity patient, CapdStatus status);
+    // 투석일지 id로 조회
+    Optional<CapdCommonEntity> findByCapdId(Long capdId);
 }

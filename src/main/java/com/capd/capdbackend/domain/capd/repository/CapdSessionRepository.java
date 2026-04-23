@@ -16,4 +16,7 @@ public interface CapdSessionRepository extends JpaRepository<CapdSessionEntity, 
 
     // 해당 세션 투석일지가 이미 존재하는지 여부
     boolean existsByCapdCommonAndSessionNumber(CapdCommonEntity capdCommon, int sessionNumber);
+
+    // 세션 투석일지 id로 조회
+    Optional<CapdSessionEntity> findByCapdSessionId(Long capdSessionId);
 }
