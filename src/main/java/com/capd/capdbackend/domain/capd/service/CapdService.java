@@ -1,7 +1,9 @@
 package com.capd.capdbackend.domain.capd.service;
 
+import com.capd.capdbackend.domain.capd.dto.request.CapdCommonUpdateRequest;
 import com.capd.capdbackend.domain.capd.dto.request.CapdCreateRequest;
 import com.capd.capdbackend.domain.capd.dto.request.CapdSessionCreateRequest;
+import com.capd.capdbackend.domain.capd.dto.request.CapdSessionUpdateRequest;
 import com.capd.capdbackend.domain.capd.dto.response.CapdCommonResponse;
 import com.capd.capdbackend.domain.capd.dto.response.CapdSessionResponse;
 import com.capd.capdbackend.domain.capd.entity.CapdCommonEntity;
@@ -296,5 +298,71 @@ public class CapdService {
 
         // 삭제
         capdCommonRepository.delete(capdCommon);
+    }
+
+    // 공통 투석일지 수정
+    @Transactional
+    public CapdCommonResponse updateCapdCommon(String email, Long capdId, CapdCommonUpdateRequest request) {
+
+        // 환자 유저 조회
+        PatientEntity patient = patientRepository.findByUserEmail(email)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 공통 일지 조회
+        CapdCommonEntity capdCommon = capdCommonRepository.findByCapdId(capdId)
+                .orElseThrow(() -> new CustomException(CapdErrorCode.CAPD_NOT_FOUND));
+
+        // 본인의 공통 투석일지인지 확인
+        if (!capdCommon.getPatient().getPatientId().equals(patient.getPatientId())) {
+            throw new CustomException(PatientErrorCode.PATIENT_NO_PERMISSION);
+        }
+
+        // 제출 상태면 수정 불가
+        if (capdCommon.getStatus() == CapdStatus.SUBMITTED) {
+            throw new CustomException(CapdErrorCode.ALREADY_SUBMITTED);
+        }
+
+        // 공통 정보 수정
+        capdCommon.updateCommonInfoFromRequest(request);
+
+        // 로그 출력
+        log.info("투석일지 수정 완료: capd={}", capdId);
+
+        // entity -> dto
+        return capdCommonMapper.toCommonResponse(capdCommon);}
+
+    // 세션 투석일지 수정
+    @Transactional
+    public CapdSessionResponse updateCapdSession(String email, Long sessionId, CapdSessionUpdateRequest request) {
+
+        // 환자 유저 확인
+        PatientEntity patient = patientRepository.findByUserEmail(email)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 세션 투석일지 조회
+        CapdSessionEntity capdSession = capdSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new CustomException(CapdErrorCode.CAPD_SESSION_NOT_FOUND));
+
+        // 본인의 세션 투석일지인지 확인
+        if (!capdSession.getCapdCommon().getPatient().getPatientId().equals(patient.getPatientId())) {
+            throw new CustomException(PatientErrorCode.PATIENT_NO_PERMISSION);
+        }
+
+        // 투석일지가 제출 상태이면 수정 불가
+        if (capdSession.getCapdCommon().getStatus() == CapdStatus.SUBMITTED) {
+            throw new CustomException(CapdErrorCode.ALREADY_SUBMITTED);
+        }
+
+        // 세션 투석일지 수정
+        capdSession.updateSessionInfo(request);
+
+        // 총초여과량 재계산
+        capdSession.getCapdCommon().calculateTotalUltrafiltration();
+
+        // 로그 출력
+        log.info("세션 투석일지 수정 완료: sessionId={}", sessionId);
+
+        // entity -> dto
+        return capdSessionMapper.toSessionResponse(capdSession);
     }
 }

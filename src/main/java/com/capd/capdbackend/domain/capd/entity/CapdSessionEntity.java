@@ -1,5 +1,6 @@
 package com.capd.capdbackend.domain.capd.entity;
 
+import com.capd.capdbackend.domain.capd.dto.request.CapdSessionUpdateRequest;
 import com.capd.capdbackend.global.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -42,4 +43,13 @@ public class CapdSessionEntity extends BaseTimeEntity {
 
     @Column(nullable = false)
     private float ultrafiltration; // 초여과량 (제수량) : 배액량 - 주입량
+
+    // 세션 투석일지 수정 업데이트 메서드
+    public void updateSessionInfo(CapdSessionUpdateRequest request) {
+        this.exchangeTime = request.getExchangeTime();
+        this.drainVolume = request.getDrainVolume();
+        this.dialysateConcentration = request.getDialysateConcentration();
+        this.infusedFluidWeight = request.getInfusedFluidWeight();
+        this.ultrafiltration = request.getDrainVolume() - request.getInfusedFluidWeight();
+    }
 }
