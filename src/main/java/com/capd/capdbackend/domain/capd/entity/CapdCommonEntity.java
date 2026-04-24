@@ -1,5 +1,6 @@
 package com.capd.capdbackend.domain.capd.entity;
 
+import com.capd.capdbackend.domain.capd.dto.request.CapdCommonUpdateRequest;
 import com.capd.capdbackend.domain.capd.dto.request.CapdCreateRequest;
 import com.capd.capdbackend.domain.patient.entity.PatientEntity;
 import com.capd.capdbackend.global.common.BaseTimeEntity;
@@ -73,6 +74,17 @@ public class CapdCommonEntity extends BaseTimeEntity {
 
     // 공통 투석일지 정보 업데이트 메서드
     public void updateCommonInfo(CapdCreateRequest request) {
+        this.cloudyDialysate = request.isCloudyDialysate();
+        this.urinationCount = request.getUrinationCount();
+        this.bodyWeight = request.getBodyWeight();
+        this.bloodPressureSys = request.getBloodPressureSys();
+        this.bloodPressureDia = request.getBloodPressureDia();
+        this.fastingBloodSugar = request.getFastingBloodSugar();
+        this.note = request.getNote();
+    }
+
+    // 공통 투석일지 수정 업데이트 메서드
+    public void updateCommonInfoFromRequest(CapdCommonUpdateRequest request) {
         this.cloudyDialysate = request.isCloudyDialysate();
         this.urinationCount = request.getUrinationCount();
         this.bodyWeight = request.getBodyWeight();

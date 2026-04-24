@@ -1,6 +1,8 @@
 package com.capd.capdbackend.domain.capd.controller;
 
+import com.capd.capdbackend.domain.capd.dto.request.CapdCommonUpdateRequest;
 import com.capd.capdbackend.domain.capd.dto.request.CapdCreateRequest;
+import com.capd.capdbackend.domain.capd.dto.request.CapdSessionUpdateRequest;
 import com.capd.capdbackend.domain.capd.dto.response.CapdCommonResponse;
 import com.capd.capdbackend.domain.capd.dto.response.CapdSessionResponse;
 import com.capd.capdbackend.domain.capd.service.CapdService;
@@ -165,5 +167,35 @@ public class CapdController {
 
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "투석일지가 전체 삭제되었습니다.", null));
+    }
+
+    // 공통 투석일지 수정
+    @Operation(summary = "공통 투석일지 수정", description = "임시 저장 상태에서만 수정 가능하고 제출 상태에서는 수정 못하는 공통 투석일지 API")
+    @PutMapping("/capds/{capdId}")
+    public ResponseEntity<BaseResponse<CapdCommonResponse>> updateCapdCommon(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long capdId,
+            @RequestBody @Valid CapdCommonUpdateRequest request) {
+
+        // service 호출
+        CapdCommonResponse response = capdService.updateCapdCommon(userDetails.getIdentifier(), capdId, request);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "공통 투석일지 수정 성공", response));
+    }
+
+    // 세션 투석일지 수정
+    @Operation(summary = "세션 투석일지 수정", description = "임시 저장 상태에서만 수정 가능하고 제출 상태에서는 수정 못하는 세션 투석일지 API")
+    @PutMapping("/capds/sessions/{sessionId}")
+    public ResponseEntity<BaseResponse<CapdSessionResponse>> updateCapdSession(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long sessionId,
+            @RequestBody @Valid CapdSessionUpdateRequest request) {
+
+        // service 호출
+        CapdSessionResponse response = capdService.updateCapdSession(userDetails.getIdentifier(), sessionId, request);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "세션 투석일지 수정 성공", response));
     }
 }
