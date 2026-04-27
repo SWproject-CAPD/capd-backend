@@ -22,4 +22,7 @@ public interface CapdCommonRepository extends JpaRepository<CapdCommonEntity, Lo
 
     // 투석일지 id로 조회
     Optional<CapdCommonEntity> findByCapdId(Long capdId);
+
+    // 의사가 제출한 투석일지를 최신순으로 조회
+    List<CapdCommonEntity> findAllByPatientAndStatusOrderByDateDesc(PatientEntity patient, CapdStatus status);
 }
