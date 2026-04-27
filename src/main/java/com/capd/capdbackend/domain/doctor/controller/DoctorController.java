@@ -92,15 +92,29 @@ public class DoctorController {
 
     // 담당 환자 특정 프로필 조회 API
     @Operation(summary = "특정 환자 조회 API", description = "환자 고유번호로 담당 환자 프로필을 조회하는 API")
-    @GetMapping("/doctors/patients/{patient-id}")
+    @GetMapping("/doctors/patients/{patientId}")
     public ResponseEntity<BaseResponse<PatientProfileResponse>> patientProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable("patient-id") Long patientId) {
+            @PathVariable("patientId") Long patientId) {
 
         // service 호출
         PatientProfileResponse patientProfileResponse = doctorService.patientProfile(userDetails.getIdentifier(), patientId);
 
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "담당 특정 환자 정보 조회 성공", patientProfileResponse));
+    }
+
+    // 환자 이름으로 조회
+    @Operation(summary = "환자 이름으로 조회 API", description = "담당 환자 이름으로 검색하는 API")
+    @GetMapping("/doctors/patients/name")
+    public ResponseEntity<BaseResponse<List<PatientProfileResponse>>> patientNameSearch(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam String name) {
+
+        // service 호출
+        List<PatientProfileResponse> response = doctorService.patientNameSearch(userDetails.getIdentifier(), name);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "이름으로 환자 조회 성공", response));
     }
 }

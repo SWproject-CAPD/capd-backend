@@ -198,4 +198,48 @@ public class CapdController {
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "세션 투석일지 수정 성공", response));
     }
+
+    // 의사가 환자 투석일지 전체 조회 API
+    @Operation(summary = "의사가 환자 투석일지 전체 조회", description = "의사가 담당 환자의 제출 상태 투석일지를 최신순으로 조회하는 API")
+    @GetMapping("/capds/doctor/{patientId}")
+    public ResponseEntity<BaseResponse<List<CapdCommonResponse>>> capdAllReadForDoctor(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long patientId) {
+
+        // service 호출
+        List<CapdCommonResponse> response = capdService.capdAllReadForDoctor(userDetails.getIdentifier(), patientId);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "환자 투석일지 전체 조회 성공", response));
+    }
+
+    // 의사가 투석일지를 날짜로 조회 API
+    @Operation(summary = "의사가 날짜로 투석일지 조회", description = "의사가 담당 환자의 특정 날짜 투석일지를 조회하는 API")
+    @GetMapping("/capds/doctor/{patientId}/date")
+    public ResponseEntity<BaseResponse<CapdCommonResponse>> capdReadForDoctorByDate(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long patientId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+
+        // service 호출
+        CapdCommonResponse response = capdService.capdReadForDoctorByDate(userDetails.getIdentifier(), patientId, date);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "날짜로 투석일지 조회 성공", response));
+    }
+
+    // 의사가 id로 투석일지 조회 API
+    @Operation(summary = "의사가 투석일지 id로 투석일지 조회", description = "의사가 담당 환자의 투석일지를 ID로 단건 조회하는 API")
+    @GetMapping("/capds/doctor/{patientId}/{capdId}")
+    public ResponseEntity<BaseResponse<CapdCommonResponse>> capdReadForDoctorById(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long patientId,
+            @PathVariable Long capdId) {
+
+        // service 호출
+        CapdCommonResponse response = capdService.capdReadForDoctorById(userDetails.getIdentifier(), patientId, capdId);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "ID로 투석일지 조회 성공", response));
+    }
 }

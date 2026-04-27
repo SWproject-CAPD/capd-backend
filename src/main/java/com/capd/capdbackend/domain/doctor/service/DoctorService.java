@@ -190,4 +190,23 @@ public class DoctorService {
         // entity -> dto
         return patientProfileMapper.toResponse(patient, patient.getUser());
     }
+
+    // 환자 이름으로 검색
+    public List<PatientProfileResponse> patientNameSearch(String licenseId, String name) {
+
+        // 의사 유저 확인
+        DoctorEntity doctor = doctorRepository.findByLicenseId(licenseId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 담당 환자 중 이름으로 검색
+        List<PatientEntity> patients = patientRepository.findByDoctorAndUser_UserNameContaining(doctor, name);
+
+        // entity -> dto
+        List<PatientProfileResponse> list = new ArrayList<>();
+        for (PatientEntity patient : patients) {
+            list.add(patientProfileMapper.toResponse(patient, patient.getUser()));
+        }
+
+        return list;
+    }
 }

@@ -24,4 +24,8 @@ public interface PatientRepository extends JpaRepository<PatientEntity, Long> {
 
     // 환자 고유번호로 환자 조회
     Optional<PatientEntity> findByPatientId(Long patientId);
+
+    // 환자 이름으로 의사가 담당 환자 검색
+    @EntityGraph(attributePaths = {"user"})
+    List<PatientEntity> findByDoctorAndUser_UserNameContaining(DoctorEntity doctor, String name);
 }
