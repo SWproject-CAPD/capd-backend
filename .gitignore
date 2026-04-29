@@ -37,3 +37,15 @@ out/
 .vscode/
 
 src/main/resources/application.properties
+
+# --- Python & Machine Learning ---
+**/__pycache__/
+*.pyc
+venv/
+
+# 무적의 와일드카드: 프로젝트 안의 '어디에 있든' 아래 확장자는 전부 무시!
+**/*.pkl
+**/*.joblib
+**/*.h5
+
+.DS_Store
