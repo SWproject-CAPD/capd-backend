@@ -5,19 +5,12 @@ from sklearn.preprocessing import StandardScaler
 import warnings
 warnings.filterwarnings('ignore')
 
-# =============================================
 # 데이터 로드
-# =============================================
-
 dr = pd.read_csv('../data/daily_records_clean.csv')
 dr['date'] = pd.to_datetime(dr['date'])
 print(f"데이터 로드 완료: {len(dr)}행, {dr['patient_id'].nunique()}명의 환자")
 
-# =============================================
-# 피처 엔지니어링 (멘토님 피드백 반영)
-# 단순 수치 6개 + 시계열 특성 추가
-# =============================================
-
+# 피처 엔지니어링
 base_features = [
     'body_weight_kg',
     'systolic_bp_mmhg',
@@ -29,28 +22,23 @@ base_features = [
 
 df = dr.dropna(subset=base_features).copy()
 
-# 환자별로 시계열 피처 생성
-# 환자마다 따로 계산해야 함 (다른 환자 데이터가 섞이면 안 됨)
+# 환자별로 시계열 피처 생성 + 환자마다 따로 계산
 result_dfs = []
 
 for pid in df['patient_id'].unique():
     pdata = df[df['patient_id'] == pid].sort_values('date').copy()
 
     for col in base_features:
-        # 1. 전날 대비 변화량 (difference)
-        # 갑작스러운 변화 탐지
+        # 전날 대비 변화량 (difference)
         pdata[f'{col}_diff'] = pdata[col].diff()
 
-        # 2. 7일 이동평균 (rolling mean)
-        # 주간 추세 파악
+        # 7일 이동평균 (rolling mean)
         pdata[f'{col}_roll_mean'] = pdata[col].rolling(window=7, min_periods=1).mean()
 
-        # 3. 7일 이동표준편차 (rolling std)
-        # 변동성 파악
+        # 7일 이동표준편차 (rolling std)
         pdata[f'{col}_roll_std'] = pdata[col].rolling(window=7, min_periods=1).std().fillna(0)
 
-        # 4. 이동평균 대비 잔차 (residual)
-        # 현재 값이 최근 평균에서 얼마나 벗어났는지
+        # 이동평균 대비 잔차 (residual) -> 현재 값이 최근 이동편균에서 얼마나 벗어났는지 확인
         pdata[f'{col}_residual'] = pdata[col] - pdata[f'{col}_roll_mean']
 
     result_dfs.append(pdata)
@@ -61,7 +49,7 @@ df = pd.concat(result_dfs).reset_index(drop=True)
 df = df.dropna().copy()
 print(f"피처 엔지니어링 후: {len(df)}행")
 
-# 최종 피처 목록 (기본 6개 + 파생 피처)
+# 최종 피처 목록
 all_features = base_features.copy()
 for col in base_features:
     all_features += [
@@ -73,17 +61,11 @@ for col in base_features:
 
 print(f"사용할 피처 수: {len(all_features)}개")
 
-# =============================================
 # 표준화
-# =============================================
-
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(df[all_features])
 
-# =============================================
 # Isolation Forest 학습
-# =============================================
-
 model = IsolationForest(
     n_estimators=100,
     contamination=0.05,
@@ -92,7 +74,6 @@ model = IsolationForest(
 
 model.fit(X_scaled)
 
-# decision_function: 멘토님 권장 방식
 # score > 0.05  → 정상
 # score > -0.05 → 주의
 # score <= -0.05 → 위험
@@ -102,19 +83,16 @@ df['is_anomaly'] = (df['anomaly_label'] == -1).astype(int)
 
 # 3단계 상태 분류
 def classify_status(score):
-    if score > 0.05:
+    if score > 0.07:
         return 'NORMAL'
-    elif score > -0.05:
+    elif score > 0.04:
         return 'WARNING'
     else:
         return 'DANGER'
 
 df['status'] = df['anomaly_score'].apply(classify_status)
 
-# =============================================
 # 결과 출력
-# =============================================
-
 print(f"\n[이상치 탐지 결과]")
 print(f"  전체 데이터 : {len(df)}행")
 print(f"  정상(NORMAL)  : {(df['status'] == 'NORMAL').sum()}행")

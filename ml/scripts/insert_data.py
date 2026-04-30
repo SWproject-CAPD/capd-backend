@@ -37,7 +37,7 @@ patient_map = {
     'patient_010': 14,
 }
 
-# ── capd_commons 삽입 ──
+# capd_commons 삽입
 dr_clean['patient_id_fk'] = dr_clean['patient_id'].map(patient_map)
 
 commons = pd.DataFrame({
@@ -60,7 +60,6 @@ commons.to_sql('capd_commons', engine, if_exists='append', index=False)
 print(f"capd_commons 삽입 완료: {len(commons)}행")
 
 # ── capd_sessions 삽입 ──
-# DB에서 방금 넣은 capd_commons의 capd_id 가져오기
 commons_db = pd.read_sql(
     "SELECT capd_id, patient_id, date FROM capd_commons", engine
 )

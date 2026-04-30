@@ -1,4 +1,3 @@
-# api_server.py
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List
@@ -13,9 +12,6 @@ model = joblib.load('../models/isolation_forest.pkl')
 scaler = joblib.load('../models/scaler.pkl')
 print("Model Load Complete!")
 
-# Spring Boot에서 보내는 데이터 구조
-# 최근 7일치 데이터를 리스트로 보내면
-# FastAPI에서 rolling 통계를 직접 계산함
 class DailyRecord(BaseModel):
     date: str
     body_weight_kg: float
@@ -27,8 +23,6 @@ class DailyRecord(BaseModel):
 
 class AnomalyRequest(BaseModel):
     patient_id: str
-    # 최근 7일치 기록 리스트 (오래된 순으로 정렬해서 보낼 것)
-    # 마지막 원소가 오늘 분석할 데이터
     records: List[DailyRecord]
 
 base_features = [
@@ -39,6 +33,16 @@ base_features = [
     'total_ultrafiltration_g',
     'urination_count',
 ]
+
+# anomaly_detection.py와 동일한 순서
+all_features = base_features.copy()
+for col in base_features:
+    all_features += [
+        f'{col}_diff',
+        f'{col}_roll_mean',
+        f'{col}_roll_std',
+        f'{col}_residual',
+    ]
 
 feature_names_kor = {
     'body_weight_kg': '체중',
@@ -53,48 +57,53 @@ feature_names_kor = {
 def predict_anomaly(request: AnomalyRequest):
 
     if len(request.records) < 1:
-        raise HTTPException(status_code=400, detail="최소 1개 이상의 기록이 필요합니다.")
+        raise HTTPException(
+            status_code=400,
+            detail="최소 1개 이상의 기록이 필요합니다."
+    )
+    
+    # 디버그용 — 받은 데이터 출력
+    print(f"\n=== 받은 데이터 ===")
+    print(f"patient_id: {request.patient_id}")
+    print(f"records 수: {len(request.records)}")
+    for r in request.records:
+        print(f"  {r.date} | 체중:{r.body_weight_kg} | 혈압:{r.systolic_bp_mmhg} | UF:{r.total_ultrafiltration_g}")
+    print(f"==================\n")
 
-    # 1. 리스트 → DataFrame 변환
+    # 리스트 → DataFrame 변환
     df = pd.DataFrame([r.dict() for r in request.records])
     df['date'] = pd.to_datetime(df['date'])
     df = df.sort_values('date').reset_index(drop=True)
 
-    # 2. 시계열 피처 계산 (학습 때와 동일한 방식)
+    # 시계열 피처 계산
     for col in base_features:
         df[f'{col}_diff'] = df[col].diff().fillna(0)
         df[f'{col}_roll_mean'] = df[col].rolling(window=7, min_periods=1).mean()
         df[f'{col}_roll_std'] = df[col].rolling(window=7, min_periods=1).std().fillna(0)
         df[f'{col}_residual'] = df[col] - df[f'{col}_roll_mean']
 
-    # 3. 오늘(마지막 행)만 분석
+    # 오늘(마지막 행)만 분석
     today = df.iloc[[-1]]
-
-    all_features = []
-    for col in base_features:
-        all_features += [col, f'{col}_diff', f'{col}_roll_mean',
-                         f'{col}_roll_std', f'{col}_residual']
-
     input_data = today[all_features].values
 
-    # 4. 표준화
+    # 표준화
     scaled_data = scaler.transform(input_data)
 
-    # 5. 멘토님 권장 방식 — decision_function으로 점수 계산
+    # decision_function으로 점수 계산
     score = float(model.decision_function(scaled_data)[0])
 
-    # 6. 3단계 상태 분류
-    if score > 0.05:
+    # 3단계 상태 분류
+    if score > 0.07:
         status = "정상 (Normal)"
         level = 1
-    elif score > -0.05:
+    elif score > 0.04:
         status = "주의 (Warning) - 관심이 필요합니다."
         level = 2
     else:
         status = "위험 (Danger) - 즉각적인 조치가 필요합니다!"
         level = 3
 
-    # 7. 원인 분석 (주의 이상일 때만)
+    # 원인 분석
     top_causes = []
     if level >= 2:
         z_scores = scaled_data[0]
@@ -118,7 +127,7 @@ def predict_anomaly(request: AnomalyRequest):
                 'impact_score': round(cause['absolute_impact'], 2)
             })
 
-    # 8. 최종 응답
+    # 최종 응답
     return {
         'patient_id': request.patient_id,
         'analysis_date': str(df.iloc[-1]['date'].date()),

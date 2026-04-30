@@ -4,8 +4,7 @@ import pandas as pd
 dr = pd.read_csv('../data/daily_records.csv')
 es = pd.read_csv('../data/exchange_sessions.csv')
 
-# ── daily_records 정제 ──
-# quality_issue_count가 0인 것만 = 문제없는 정상 데이터
+# daily_records 정제
 dr_clean = dr[dr['quality_issue_count'] == 0].copy()
 
 # 머신러닝에 필요한 컬럼만 선택
@@ -25,8 +24,7 @@ dr_clean = dr_clean[[
     'age'
 ]].reset_index(drop=True)
 
-# ── exchange_sessions 정제 ──
-# performed가 1인 것만 = 실제로 수행한 세션
+# exchange_sessions 정제
 es_clean = es[es['performed'] == 1].copy()
 
 es_clean = es_clean[[
