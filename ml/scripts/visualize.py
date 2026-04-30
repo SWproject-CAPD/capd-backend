@@ -7,20 +7,14 @@ warnings.filterwarnings('ignore')
 plt.rcParams['font.family'] = 'AppleGothic'
 plt.rcParams['axes.unicode_minus'] = False
 
-# =============================================
 # 데이터 로드
-# =============================================
-
 df = pd.read_csv('../data/anomaly_results.csv')
 df['date'] = pd.to_datetime(df['date'])
 print(f"결과 데이터 로드 완료: {len(df)}행")
 
 os.makedirs('../figures', exist_ok=True)
 
-# =============================================
-# 시계열 시각화 — 3단계 색상으로 표시
-# =============================================
-
+# 시계열 시각화 
 patients = sorted(df['patient_id'].unique())
 
 fig, axes = plt.subplots(2, 5, figsize=(28, 10))
@@ -28,15 +22,15 @@ axes = axes.flatten()
 
 # 상태별 색상 정의
 status_colors = {
-    'NORMAL':  'steelblue',   # 정상 → 파란색
-    'WARNING': 'orange',      # 주의 → 주황색
-    'DANGER':  'red',         # 위험 → 빨간색
+    'NORMAL':  'steelblue',   # 정상 : 파란색
+    'WARNING': 'orange',      # 주의 : 주황색
+    'DANGER':  'red',         # 위험 : 빨간색
 }
 
 for i, pid in enumerate(patients):
     pdata = df[df['patient_id'] == pid].sort_values('date')
 
-    # 정상 데이터 → 파란 선
+    # 정상 데이터
     normal = pdata[pdata['status'] == 'NORMAL']
     axes[i].plot(
         normal['date'],
@@ -47,7 +41,7 @@ for i, pid in enumerate(patients):
         label='정상'
     )
 
-    # 주의 → 주황 점
+    # 주의 데이터
     warning = pdata[pdata['status'] == 'WARNING']
     if len(warning) > 0:
         axes[i].scatter(
@@ -59,7 +53,7 @@ for i, pid in enumerate(patients):
             label=f'주의 ({len(warning)}건)'
         )
 
-    # 위험 → 빨간 점
+    # 위험 데이터
     danger = pdata[pdata['status'] == 'DANGER']
     if len(danger) > 0:
         axes[i].scatter(

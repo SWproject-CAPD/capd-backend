@@ -7,7 +7,6 @@ import os
 import warnings
 warnings.filterwarnings('ignore')
 
-# anomaly_detection.py와 완전히 동일한 학습 코드
 dr = pd.read_csv('../data/daily_records_clean.csv')
 dr['date'] = pd.to_datetime(dr['date'])
 

@@ -26,6 +26,7 @@ public interface CapdCommonRepository extends JpaRepository<CapdCommonEntity, Lo
     // 의사가 제출한 투석일지를 최신순으로 조회
     List<CapdCommonEntity> findAllByPatientAndStatusOrderByDateDesc(PatientEntity patient, CapdStatus status);
 
-    // 최근 7일치 SUBMITTED 기록 조회
-    List<CapdCommonEntity> findTop7ByPatientAndStatusOrderByDateDesc(PatientEntity patient, CapdStatus status);
+    // 날짜 기준 이전 7일치 SUBMITTED 기록 조회
+    List<CapdCommonEntity> findTop7ByPatientAndStatusAndDateLessThanEqualOrderByDateDesc(
+            PatientEntity patient, CapdStatus status, LocalDate date);
 }
