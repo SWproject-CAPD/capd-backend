@@ -3,6 +3,7 @@ package com.capd.capdbackend.domain.anomaly.service;
 import com.capd.capdbackend.domain.anomaly.client.MlApiClient;
 import com.capd.capdbackend.domain.anomaly.dto.response.AnomalyResultResponse;
 import com.capd.capdbackend.domain.anomaly.entity.AnomalyResultEntity;
+import com.capd.capdbackend.domain.anomaly.exception.AnomalyErrorCode;
 import com.capd.capdbackend.domain.anomaly.repository.AnomalyResultRepository;
 import com.capd.capdbackend.domain.capd.entity.CapdCommonEntity;
 import com.capd.capdbackend.domain.capd.entity.CapdStatus;
@@ -81,8 +82,7 @@ public class AnomalyService {
         }
 
         // 최근 7일치 SUBMITTED 기록 조회
-        List<CapdCommonEntity> recentRecords = capdCommonRepository
-                .findTop7ByPatientAndStatusOrderByDateDesc(patient, CapdStatus.SUBMITTED);
+        List<CapdCommonEntity> recentRecords = capdCommonRepository.findTop7ByPatientAndStatusAndDateLessThanEqualOrderByDateDesc(patient, CapdStatus.SUBMITTED, date);
 
         if (recentRecords.isEmpty()) {
             throw new CustomException(CapdErrorCode.CAPD_NOT_FOUND);
@@ -92,8 +92,14 @@ public class AnomalyService {
         recentRecords.sort((a, b) -> a.getDate().compareTo(b.getDate()));
 
         // FastAPI 호출
-        Map<String, Object> result = mlApiClient.requestAnomalyAnalysis(
-                String.valueOf(patient.getPatientId()), recentRecords);
+        Map<String, Object> result;
+        try {
+            result = mlApiClient.requestAnomalyAnalysis(
+                    String.valueOf(patient.getPatientId()), recentRecords);
+        } catch (Exception e) {
+            log.error("FastAPI 호출 실패: {}", e.getMessage());
+            throw new CustomException(AnomalyErrorCode.ANOMALY_SERVER_ERROR);
+        }
 
         // top_causes JSON 변환
         String topCausesJson = "";
