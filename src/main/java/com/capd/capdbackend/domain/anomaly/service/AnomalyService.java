@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -84,11 +83,12 @@ public class AnomalyService {
         // 최근 7일치 SUBMITTED 기록 조회
         List<CapdCommonEntity> recentRecords = capdCommonRepository.findTop7ByPatientAndStatusAndDateLessThanEqualOrderByDateDesc(patient, CapdStatus.SUBMITTED, date);
 
+        // 환자가 제출한 투석기록이 존재하지 않을때
         if (recentRecords.isEmpty()) {
             throw new CustomException(CapdErrorCode.CAPD_NOT_FOUND);
         }
 
-        // 날짜 오름차순 정렬 (오래된 것 먼저 — FastAPI에서 rolling 계산에 필요)
+        // 날짜 오름차순 정렬
         recentRecords.sort((a, b) -> a.getDate().compareTo(b.getDate()));
 
         // FastAPI 호출
