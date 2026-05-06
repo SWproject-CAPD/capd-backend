@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(title = "환자 진료 예약 조회 response dto", description = "환자가 본인의 진료 예약 정보 조회할때 반환하는 데이터")
-public class ReservationReadResponse {
+public class ReservationPatientReadResponse {
 
     @Schema(description = "예약 고유번호", example = "1")
     private Long reservationId;

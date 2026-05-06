@@ -7,20 +7,23 @@ import com.capd.capdbackend.domain.patient.entity.PatientEntity;
 import com.capd.capdbackend.domain.patient.repository.PatientRepository;
 import com.capd.capdbackend.domain.reservation.dto.request.ReservationCreateRequest;
 import com.capd.capdbackend.domain.reservation.dto.response.ReservationCreateResponse;
-import com.capd.capdbackend.domain.reservation.dto.response.ReservationReadResponse;
+import com.capd.capdbackend.domain.reservation.dto.response.ReservationDoctorReadResponse;
+import com.capd.capdbackend.domain.reservation.dto.response.ReservationPatientReadResponse;
 import com.capd.capdbackend.domain.reservation.entity.ReservationEntity;
 import com.capd.capdbackend.domain.reservation.exception.ReservationErrorCode;
 import com.capd.capdbackend.domain.reservation.mapper.ReservationCreateMapper;
-import com.capd.capdbackend.domain.reservation.mapper.ReservationReadMapper;
+import com.capd.capdbackend.domain.reservation.mapper.ReservationDoctorReadMapper;
+import com.capd.capdbackend.domain.reservation.mapper.ReservationPatientReadMapper;
 import com.capd.capdbackend.domain.reservation.repository.ReservationRepository;
 import com.capd.capdbackend.domain.user.exception.UserErrorCode;
-import com.capd.capdbackend.domain.user.repository.UserRepository;
 import com.capd.capdbackend.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -33,7 +36,8 @@ public class ReservationService {
     private final DoctorRepository doctorRepository;
     private final PatientRepository patientRepository;
     private final ReservationCreateMapper reservationCreateMapper;
-    private final ReservationReadMapper reservationReadMapper;
+    private final ReservationPatientReadMapper reservationPatientReadMapper;
+    private final ReservationDoctorReadMapper reservationDoctorReadMapper;
 
     // 의사가 진료 예약 생성
     @Transactional
@@ -71,7 +75,7 @@ public class ReservationService {
     }
 
     // 환자가 본인의 예약 날짜를 조회
-    public List<ReservationReadResponse> patientReservation(String email) {
+    public List<ReservationPatientReadResponse> patientReservation(String email) {
 
         // 환자 유저 조회
         PatientEntity patient = patientRepository.findByUserEmail(email)
@@ -82,7 +86,25 @@ public class ReservationService {
 
         // entity -> dto
         return list.stream()
-                .map(reservationReadMapper::toResponse)
+                .map(reservationPatientReadMapper::toResponse)
+                .toList();
+    }
+
+    // 의사가 특정 날짜 진료 예약 조회
+    public List<ReservationDoctorReadResponse> doctorReservation(String licenseId, LocalDate date) {
+
+        // 의사 유저 조회
+        DoctorEntity doctor = doctorRepository.findByLicenseId(licenseId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        LocalDateTime start = date.atStartOfDay();
+        LocalDateTime end = date.atTime(23, 59, 59);
+
+        List<ReservationEntity> list = reservationRepository.findAllByDoctorAndReservationDateBetweenOrderByReservationDateAsc(doctor, start, end);
+
+        // entity -> dto
+        return list.stream()
+                .map(reservationDoctorReadMapper::toResponse)
                 .toList();
     }
 }

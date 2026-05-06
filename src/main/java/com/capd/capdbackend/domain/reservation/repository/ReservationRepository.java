@@ -11,12 +11,12 @@ import java.util.Optional;
 
 public interface ReservationRepository extends JpaRepository<ReservationEntity, Long> {
 
-    // 의사의 전체 예약 목록 최신순 조회
-    List<ReservationEntity> findAllByDoctorOrderByReservationDateAsc(DoctorEntity doctor);
-
     // 환자의 전체 예약 목록 조회
     List<ReservationEntity> findAllByPatientOrderByReservationDateAsc(PatientEntity patient);
 
     // 같은 날짜 중복 예약 확인
     Optional<ReservationEntity> findByDoctorAndPatientAndReservationDate(DoctorEntity doctor, PatientEntity patient, LocalDateTime reservationDate);
+
+    // 의사가 특정 날짜의 진료 예약 조회
+    List<ReservationEntity> findAllByDoctorAndReservationDateBetweenOrderByReservationDateAsc(DoctorEntity doctor, LocalDateTime start, LocalDateTime end);
 }
