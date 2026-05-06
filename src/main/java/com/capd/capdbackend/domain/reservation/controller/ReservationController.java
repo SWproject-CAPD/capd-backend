@@ -2,6 +2,7 @@ package com.capd.capdbackend.domain.reservation.controller;
 
 import com.capd.capdbackend.domain.reservation.dto.request.ReservationCreateRequest;
 import com.capd.capdbackend.domain.reservation.dto.response.ReservationCreateResponse;
+import com.capd.capdbackend.domain.reservation.dto.response.ReservationReadResponse;
 import com.capd.capdbackend.domain.reservation.service.ReservationService;
 import com.capd.capdbackend.global.response.BaseResponse;
 import com.capd.capdbackend.global.security.CustomUserDetails;
@@ -11,10 +12,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,5 +36,18 @@ public class ReservationController {
 
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(201, "진료 예약 생성 성공", response));
+    }
+
+    // 환자가 진료 예약 조회
+    @Operation(summary = "환자 본인 진료 예약 조회", description = "환자가 본인의 진료 예약 날짜를 최신순으로 조회하는 API")
+    @GetMapping("/reservations/patient")
+    public ResponseEntity<BaseResponse<List<ReservationReadResponse>>> readPatientReservation(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        // service 호출
+        List<ReservationReadResponse> response = reservationService.patientReservation(userDetails.getIdentifier());
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "진료 예약 조회 성공", response));
     }
 }
