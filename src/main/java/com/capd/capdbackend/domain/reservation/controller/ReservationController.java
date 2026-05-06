@@ -67,4 +67,18 @@ public class ReservationController {
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "진료 예약 조회 성공", response));
     }
+
+    // 의사가 진료 삭제
+    @Operation(summary = "진료 예약 삭제", description = "의사가 담당 환자의 진료 예약을 삭제하는 API")
+    @DeleteMapping("/reservations/{reservationId}")
+    public ResponseEntity<BaseResponse<Void>> deleteReservation(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long reservationId) {
+
+        // service 호출
+        reservationService.deleteReservation(userDetails.getIdentifier(), reservationId);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "진료 에약 삭제 성공", null));
+    }
 }

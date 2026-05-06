@@ -107,4 +107,25 @@ public class ReservationService {
                 .map(reservationDoctorReadMapper::toResponse)
                 .toList();
     }
+
+    // 의사가 진료 예약을 삭제
+    @Transactional
+    public void deleteReservation(String licenseId, Long reservationId) {
+
+        // 의사 유저 조회
+        DoctorEntity doctor = doctorRepository.findByLicenseId(licenseId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 예약이 존재하는지 확인
+        ReservationEntity reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new CustomException(ReservationErrorCode.RESERVATION_NOT_FOUND));
+
+        // 담당 예약인지 권한 확인
+        if (!reservation.getDoctor().getDoctorId().equals(doctor.getDoctorId())) {
+            throw new CustomException(ReservationErrorCode.RESERVATION_NO_PERMISSION);
+        }
+
+        // DB에서 삭제
+        reservationRepository.delete(reservation);
+    }
 }
