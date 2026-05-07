@@ -29,4 +29,7 @@ public interface CapdCommonRepository extends JpaRepository<CapdCommonEntity, Lo
     // 날짜 기준 이전 7일치 SUBMITTED 기록 조회
     List<CapdCommonEntity> findTop7ByPatientAndStatusAndDateLessThanEqualOrderByDateDesc(
             PatientEntity patient, CapdStatus status, LocalDate date);
+
+    // 기간 + 상태로 조회 -> 주간 보고서 생성 시 사용
+    List<CapdCommonEntity> findAllByPatientAndStatusAndDateBetweenOrderByDateAsc(PatientEntity patient, CapdStatus status, LocalDate startDate, LocalDate endDate);
 }
