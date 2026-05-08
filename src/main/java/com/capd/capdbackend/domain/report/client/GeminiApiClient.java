@@ -27,6 +27,8 @@ public class GeminiApiClient {
     }
 
     public String generateContent(String prompt) {
+
+        // 요청 데이터 구성
         try {
             Map<String, Object> requestBody = Map.of(
                     "contents", List.of(
@@ -36,6 +38,7 @@ public class GeminiApiClient {
                     )
             );
 
+            // HTTP 요청 전송
             Map response = restClient.post()
                     .uri("/v1beta/models/{model}:generateContent", model)
                     .body(requestBody)
@@ -51,10 +54,10 @@ public class GeminiApiClient {
             log.info("Gemini 응답 완료");
             return text;
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Gemini API 호출 실패: {}", e.getMessage());
             throw new RuntimeException("Gemini 서버 연결 실패: " + e.getMessage());
         }
     }
-
 }
