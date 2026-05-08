@@ -39,21 +39,18 @@ public class ReportService {
 
     // 주간 보고서 생성 (월 + 주차 선택)
     @Transactional
-    public ReportCreateResponse generateReport(
-            String licenseId, Long patientId,
-            int year, int month, int weekNumber) {
+    public ReportCreateResponse generateReport(String licenseId, Long patientId, int year, int month, int weekNumber) {
 
-        // 의사 조회
+        // 의사 유저 조회
         DoctorEntity doctor = doctorRepository.findByLicenseId(licenseId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-        // 환자 조회
+        // 환자 유저 조회
         PatientEntity patient = patientRepository.findByPatientId(patientId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
         // 담당 환자인지 확인
-        if (patient.getDoctor() == null ||
-                !patient.getDoctor().getDoctorId().equals(doctor.getDoctorId())) {
+        if (patient.getDoctor() == null || !patient.getDoctor().getDoctorId().equals(doctor.getDoctorId())) {
             throw new CustomException(DoctorErrorCode.DOCTOR_NO_PERMISSION);
         }
 
@@ -63,22 +60,20 @@ public class ReportService {
         LocalDate endDate = dateRange[1];
 
         // 같은 기간 보고서 이미 존재하면 오류
-        if (reportRepository.findByDoctorAndPatientAndStartDateAndEndDate(
-                doctor, patient, startDate, endDate).isPresent()) {
+        if (reportRepository.findByDoctorAndPatientAndStartDateAndEndDate(doctor, patient, startDate, endDate).isPresent()) {
             throw new CustomException(ReportErrorCode.REPORT_ALREADY_EXISTS);
         }
 
         // 해당 기간 투석 데이터 조회
-        List<CapdCommonEntity> records = capdCommonRepository
-                .findAllByPatientAndStatusAndDateBetweenOrderByDateAsc(
-                        patient, CapdStatus.SUBMITTED, startDate, endDate);
+        List<CapdCommonEntity> records = capdCommonRepository.findAllByPatientAndStatusAndDateBetweenOrderByDateAsc(patient, CapdStatus.SUBMITTED, startDate, endDate);
 
         // 투석 데이터 없으면 오류
         if (records.isEmpty()) {
             throw new CustomException(ReportErrorCode.REPORT_NO_DATA);
         }
 
-        // 통계 계산
+        // 평균, 최대&최소 통계 계산
+        // 체중 변화
         double avgWeight = records.stream()
                 .mapToDouble(CapdCommonEntity::getBodyWeight).average().orElse(0);
         double minWeight = records.stream()
@@ -86,14 +81,17 @@ public class ReportService {
         double maxWeight = records.stream()
                 .mapToDouble(CapdCommonEntity::getBodyWeight).max().orElse(0);
 
+        // 수축기 혈압, 이완기 혈압 변화
         double avgSysBp = records.stream()
                 .mapToDouble(CapdCommonEntity::getBloodPressureSys).average().orElse(0);
         double avgDiaBp = records.stream()
                 .mapToDouble(CapdCommonEntity::getBloodPressureDia).average().orElse(0);
 
+        // 공복혈당 변화
         double avgBloodSugar = records.stream()
                 .mapToDouble(CapdCommonEntity::getFastingBloodSugar).average().orElse(0);
 
+        // 초여과량 변화
         double avgUF = records.stream()
                 .mapToDouble(CapdCommonEntity::getTotalUltrafiltration).average().orElse(0);
         double minUF = records.stream()
@@ -102,18 +100,12 @@ public class ReportService {
                 .mapToDouble(CapdCommonEntity::getTotalUltrafiltration).max().orElse(0);
 
         // 요약 텍스트 생성
-        String weightSummary = String.format(
-                "평균 %.1fkg (최소 %.1fkg, 최대 %.1fkg)",
-                avgWeight, minWeight, maxWeight);
-        String bpSummary = String.format(
-                "평균 수축기 %.0fmmHg / 이완기 %.0fmmHg",
-                avgSysBp, avgDiaBp);
-        String bloodSugarSummary = String.format(
-                "평균 공복혈당 %.0fmg/dL", avgBloodSugar);
-        String ufSummary = String.format(
-                "평균 총초여과량 %.0fg (최소 %.0fg, 최대 %.0fg)",
-                avgUF, minUF, maxUF);
+        String weightSummary = String.format("평균 %.1fkg (최소 %.1fkg, 최대 %.1fkg)", avgWeight, minWeight, maxWeight);
+        String bpSummary = String.format("평균 수축기 %.0fmmHg / 이완기 %.0fmmHg", avgSysBp, avgDiaBp);
+        String bloodSugarSummary = String.format("평균 공복혈당 %.0fmg/dL", avgBloodSugar);
+        String ufSummary = String.format("평균 총초여과량 %.0fg (최소 %.0fg, 최대 %.0fg)", avgUF, minUF, maxUF);
 
+        // 이상치 요약
         long cloudyCount = records.stream()
                 .filter(CapdCommonEntity::isCloudyDialysate).count();
         String anomalySummary = cloudyCount > 0
@@ -144,10 +136,13 @@ public class ReportService {
                 .docSummary(docSummary)
                 .build();
 
+        // DB에 저장
         reportRepository.save(report);
-        log.info("주간 보고서 생성 완료: patientId={}, {}년 {}월 {}주차 ({}~{})",
-                patientId, year, month, weekNumber, startDate, endDate);
 
+        // 로그 출력
+        log.info("주간 보고서 생성 완료: patientId={}, {}년 {}월 {}주차 ({}~{})", patientId, year, month, weekNumber, startDate, endDate);
+
+        // entity -> dto
         return reportMapper.toResponse(report);
     }
 
@@ -169,27 +164,25 @@ public class ReportService {
             throw new CustomException(DoctorErrorCode.DOCTOR_NO_PERMISSION);
         }
 
-        return reportRepository
-                .findAllByDoctorAndPatientOrderByStartDateDesc(doctor, patient)
+        return reportRepository.findAllByDoctorAndPatientOrderByStartDateDesc(doctor, patient)
                 .stream()
                 .map(reportMapper::toResponse)
                 .toList();
     }
 
-    // 주차 → 날짜 범위 계산
+    // 주차 → 날짜 범위 계산하는 메서드
     private LocalDate[] getWeekDateRange(int year, int month, int weekNumber) {
 
-        // 해당 월의 1일
+        // 해당 월의 1일을 생성
         LocalDate firstDayOfMonth = LocalDate.of(year, month, 1);
 
         // 주차 기준 시작일 계산
         LocalDate startDate = firstDayOfMonth.plusDays((long) (weekNumber - 1) * 7);
 
         // 해당 월의 마지막 날
-        LocalDate lastDayOfMonth = firstDayOfMonth.withDayOfMonth(
-                firstDayOfMonth.lengthOfMonth());
+        LocalDate lastDayOfMonth = firstDayOfMonth.withDayOfMonth(firstDayOfMonth.lengthOfMonth());
 
-        // 종료일 = 시작일 + 6일 (월의 마지막 날 초과하면 마지막 날로 설정)
+        // 종료일이 월을 초과하면 마지막 날로 조정
         LocalDate endDate = startDate.plusDays(6);
         if (endDate.isAfter(lastDayOfMonth)) {
             endDate = lastDayOfMonth;
