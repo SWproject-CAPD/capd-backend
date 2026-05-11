@@ -73,25 +73,32 @@ public class SurveyService {
         LocalDate startDate = endDate.minusDays(6);
         List<CapdCommonEntity> records = capdCommonRepository.findAllByPatientAndStatusAndDateBetweenOrderByDateAsc(patient, CapdStatus.SUBMITTED, startDate, endDate);
 
-        // Gemini 프롬프트 구성 및 호출
-        String prompt = buildQuestionPrompt(
-                patient.getUser().getUserName(), records);
+        // Gemini 프롬프트 구성
+        String prompt = buildQuestionPrompt(patient.getUser().getUserName(), records);
+
+        // Gemini API 호출
         String geminiResponse = geminiApiClient.generateContent(prompt);
 
         // Gemini 응답 파싱
         Map<String, Object> parsed = parseGeminiResponse(geminiResponse);
         String questionText = (String) parsed.get("questionText");
         String typeStr = (String) parsed.get("questionType");
-        // 수정
+
         String options = null;
         if (parsed.containsKey("options") && parsed.get("options") != null) {
             try {
+                // List 형태를 JSON 문자열로 변환
                 options = objectMapper.writeValueAsString(parsed.get("options"));
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 log.error("options 파싱 실패: {}", e.getMessage());
             }
         }
+
+        // questionReason 값 추출
         String questionReason = (String) parsed.get("questionReason");
+
+        // 질문이 서술형이면 enum 클래스로 바꿈
         QuestionType type = QuestionType.valueOf(typeStr);
 
         // 질문 저장
@@ -117,8 +124,7 @@ public class SurveyService {
     }
 
     // Gemini 프롬프트 구성
-    private String buildQuestionPrompt(
-            String patientName, List<CapdCommonEntity> records) {
+    private String buildQuestionPrompt(String patientName, List<CapdCommonEntity> records) {
 
         StringBuilder dataBuilder = new StringBuilder();
         for (CapdCommonEntity record : records) {
@@ -181,7 +187,8 @@ public class SurveyService {
                     .replaceAll("```", "")
                     .trim();
             return objectMapper.readValue(cleaned, Map.class);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Gemini 응답 파싱 실패: {}", e.getMessage());
             throw new RuntimeException("Gemini 응답 파싱 실패");
         }
