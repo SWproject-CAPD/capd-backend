@@ -1,5 +1,6 @@
 package com.capd.capdbackend.domain.survey.controller;
 
+import com.capd.capdbackend.domain.survey.dto.response.PatientQuestionResponse;
 import com.capd.capdbackend.domain.survey.dto.response.QuestionResponse;
 import com.capd.capdbackend.domain.survey.service.SurveyService;
 import com.capd.capdbackend.global.response.BaseResponse;
@@ -10,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -59,5 +62,19 @@ public class SurveyController {
 
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "질문 거절 성공", response));
+    }
+
+    // 환자가 승인된 질문 조회
+    @Operation(summary = "환자가 승인된 질문을 조회", description = "의사가 승인한 질문을 예약 날짜 전날까지 조회하는 API")
+    @GetMapping("/surveys/{reservationId}/patient/questions")
+    public ResponseEntity<BaseResponse<List<PatientQuestionResponse>>> checkQuestion(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long reservationId) {
+
+        // service 호출
+        List<PatientQuestionResponse> response = surveyService.checkQuestion(userDetails.getIdentifier(), reservationId);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "질문 조회 성공", response));
     }
 }
