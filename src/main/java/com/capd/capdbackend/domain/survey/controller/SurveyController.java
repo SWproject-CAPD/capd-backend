@@ -9,10 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,7 +22,7 @@ public class SurveyController {
     // 의사가 질문 생성
     @Operation(summary = "AI 질문 생성", description = "의사가 특정 예약에 대한 AI 질문 1개를 생성하는 API")
     @PostMapping("/surveys/{reservationId}/questions")
-    public ResponseEntity<BaseResponse<QuestionResponse>> generateQuestion(
+    public ResponseEntity<BaseResponse<QuestionResponse>> createQuestion(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long reservationId) {
 
@@ -34,5 +31,33 @@ public class SurveyController {
 
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "질문 생성 성공", response));
+    }
+
+    // 의사가 질문 승인
+    @Operation(summary = "의사가 질문 승인", description = "의사가 AI가 생성해준 질문을 승인하는 API")
+    @PatchMapping("/surveys/questions/{questionId}/approve")
+    public ResponseEntity<BaseResponse<QuestionResponse>> approveQuestion(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long questionId) {
+
+        // service 호출
+        QuestionResponse response = surveyService.approveQuestion(userDetails.getIdentifier(), questionId);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200 ,"질문 승인 성공", response));
+    }
+
+    // 의사가 질문 거절
+    @Operation(summary = "의사가 질문 거절", description = "의사가 AI가 생성해준 질문을 거절하는 API")
+    @PatchMapping("/surveys/questions/{questionId}/reject")
+    public ResponseEntity<BaseResponse<QuestionResponse>> rejectQuestion(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long questionId) {
+
+        // service 호출
+        QuestionResponse response = surveyService.rejectQuestion(userDetails.getIdentifier(), questionId);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "질문 거절 성공", response));
     }
 }
