@@ -12,8 +12,11 @@ import com.capd.capdbackend.domain.report.client.GeminiApiClient;
 import com.capd.capdbackend.domain.reservation.entity.ReservationEntity;
 import com.capd.capdbackend.domain.reservation.exception.ReservationErrorCode;
 import com.capd.capdbackend.domain.reservation.repository.ReservationRepository;
+import com.capd.capdbackend.domain.survey.dto.request.AnswerRequest;
+import com.capd.capdbackend.domain.survey.dto.response.AnswerResponse;
 import com.capd.capdbackend.domain.survey.dto.response.PatientQuestionResponse;
 import com.capd.capdbackend.domain.survey.dto.response.QuestionResponse;
+import com.capd.capdbackend.domain.survey.entity.AnswerResultEntity;
 import com.capd.capdbackend.domain.survey.entity.QuestionRecommendEntity;
 import com.capd.capdbackend.domain.survey.entity.QuestionStatus;
 import com.capd.capdbackend.domain.survey.entity.QuestionType;
@@ -276,5 +279,55 @@ public class SurveyService {
         return questionRecommendRepository.findAllByReservationAndStatusOrderByCreatedAtDesc(reservation, QuestionStatus.APPROVED).stream()
                 .map(questionMapper::toPatientQuestionResponse)
                 .toList();
+    }
+
+    // 환자가 승인된 질문에 대한 답변
+    @Transactional
+    public AnswerResponse answerQuestion(String email, Long questionId, AnswerRequest request) {
+
+        // 환자 유저 조회
+        PatientEntity patient = patientRepository.findByUserEmail(email)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 질문 조회
+        QuestionRecommendEntity question = questionRecommendRepository.findByQuestionId(questionId)
+                .orElseThrow(() -> new CustomException(SurveyErrorCode.QUESTION_NOT_FOUND));
+
+        // 승인된 질문인지 확인
+        if (question.getStatus() != QuestionStatus.APPROVED) {
+            throw new CustomException(SurveyErrorCode.QUESTION_NOT_APPROVED);
+        }
+
+        // 본인 질문인지 확인
+        if (!question.getPatient().getPatientId().equals(patient.getPatientId())) {
+            throw new CustomException(SurveyErrorCode.QUESTION_NO_PERMISSION);
+        }
+
+        // 예약 전날까지만 답변 가능
+        LocalDate deadline = question.getReservation().getReservationDate().toLocalDate().minusDays(1);
+        if (LocalDate.now().isAfter(deadline)) {
+            throw new CustomException(SurveyErrorCode.ANSWER_DEADLINE_PASSED);
+        }
+
+        // 이미 답변했는지 확인
+        if (answerResultRepository.existsByQuestionAndPatient(question, patient)) {
+            throw new CustomException(SurveyErrorCode.QUESTION_ALREADY_ANSWERED);
+        }
+
+        // 답변 저장
+        AnswerResultEntity answer = AnswerResultEntity.builder()
+                .question(question)
+                .patient(patient)
+                .answer(request.getAnswer())
+                .build();
+
+        // DB에 저장
+        answerResultRepository.save(answer);
+
+        // 로그 출력
+        log.info("답변 제출 완료: questionId={}, patientId={}", questionId, patient.getPatientId());
+
+        // entity -> dto
+        return answerMapper.toResponse(answer);
     }
 }
