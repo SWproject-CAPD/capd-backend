@@ -12,6 +12,7 @@ import com.capd.capdbackend.domain.report.client.GeminiApiClient;
 import com.capd.capdbackend.domain.reservation.entity.ReservationEntity;
 import com.capd.capdbackend.domain.reservation.exception.ReservationErrorCode;
 import com.capd.capdbackend.domain.reservation.repository.ReservationRepository;
+import com.capd.capdbackend.domain.survey.dto.request.AnswerListRequest;
 import com.capd.capdbackend.domain.survey.dto.request.AnswerRequest;
 import com.capd.capdbackend.domain.survey.dto.response.AnswerResponse;
 import com.capd.capdbackend.domain.survey.dto.response.PatientQuestionResponse;
@@ -34,6 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -283,52 +285,63 @@ public class SurveyService {
 
     // 환자가 승인된 질문에 대한 답변
     @Transactional
-    public AnswerResponse answerQuestion(String email, Long questionId, AnswerRequest request) {
+    public List<AnswerResponse> answerQuestion(String email, Long reservationId, AnswerListRequest request) {
 
-        // 환자 유저 조회
+        // 환자 조회
         PatientEntity patient = patientRepository.findByUserEmail(email)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-        // 질문 조회
-        QuestionRecommendEntity question = questionRecommendRepository.findByQuestionId(questionId)
-                .orElseThrow(() -> new CustomException(SurveyErrorCode.QUESTION_NOT_FOUND));
+        // 예약 조회
+        ReservationEntity reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new CustomException(ReservationErrorCode.RESERVATION_NOT_FOUND));
 
-        // 승인된 질문인지 확인
-        if (question.getStatus() != QuestionStatus.APPROVED) {
-            throw new CustomException(SurveyErrorCode.QUESTION_NOT_APPROVED);
-        }
-
-        // 본인 질문인지 확인
-        if (!question.getPatient().getPatientId().equals(patient.getPatientId())) {
-            throw new CustomException(SurveyErrorCode.QUESTION_NO_PERMISSION);
+        // 본인 예약인지 확인
+        if (!reservation.getPatient().getPatientId().equals(patient.getPatientId())) {
+            throw new CustomException(ReservationErrorCode.RESERVATION_NO_PERMISSION);
         }
 
         // 예약 전날까지만 답변 가능
-        LocalDate deadline = question.getReservation().getReservationDate().toLocalDate().minusDays(1);
+        LocalDate deadline = reservation.getReservationDate()
+                .toLocalDate().minusDays(1);
         if (LocalDate.now().isAfter(deadline)) {
             throw new CustomException(SurveyErrorCode.ANSWER_DEADLINE_PASSED);
         }
 
-        // 이미 답변했는지 확인
-        if (answerResultRepository.existsByQuestionAndPatient(question, patient)) {
-            throw new CustomException(SurveyErrorCode.QUESTION_ALREADY_ANSWERED);
+
+        // 각 답변 저장
+        List<AnswerResponse> resultList = new ArrayList<>();
+
+        for (AnswerRequest answerRequest : request.getAnswers()) {
+
+            // 질문 조회
+            QuestionRecommendEntity question = questionRecommendRepository
+                    .findByQuestionId(answerRequest.getQuestionId())
+                    .orElseThrow(() -> new CustomException(SurveyErrorCode.QUESTION_NOT_FOUND));
+
+            // 승인된 질문인지 확인
+            if (question.getStatus() != QuestionStatus.APPROVED) {
+                throw new CustomException(SurveyErrorCode.QUESTION_NOT_APPROVED);
+            }
+
+            // 이미 답변했는지 확인
+            if (answerResultRepository.existsByQuestionAndPatient(question, patient)) {
+                throw new CustomException(SurveyErrorCode.QUESTION_ALREADY_ANSWERED);
+            }
+
+            // 답변 저장
+            AnswerResultEntity answer = AnswerResultEntity.builder()
+                    .question(question)
+                    .patient(patient)
+                    .answer(answerRequest.getAnswer())
+                    .build();
+
+            answerResultRepository.save(answer);
+            resultList.add(answerMapper.toResponse(answer));
         }
 
-        // 답변 저장
-        AnswerResultEntity answer = AnswerResultEntity.builder()
-                .question(question)
-                .patient(patient)
-                .answer(request.getAnswer())
-                .build();
+        log.info("전체 답변 제출 완료: reservationId={}, patientId={}", reservationId, patient.getPatientId());
 
-        // DB에 저장
-        answerResultRepository.save(answer);
-
-        // 로그 출력
-        log.info("답변 제출 완료: questionId={}, patientId={}", questionId, patient.getPatientId());
-
-        // entity -> dto
-        return answerMapper.toResponse(answer);
+        return resultList;
     }
 
     // 의사가 특정 예약에 대한 질문들 조회
@@ -352,6 +365,34 @@ public class SurveyService {
                 .findAllByReservationOrderByCreatedAtDesc(reservation)
                 .stream()
                 .map(questionMapper::toQuestionResponse)
+                .toList();
+    }
+
+    // 의사가 환자가 작성한 질문을 조회 (특정 예약을 기준)
+    public List<AnswerResponse> checkAnswer(String licenseId, Long reservationId) {
+
+        // 의사 유저 조회
+        DoctorEntity doctor = doctorRepository.findByLicenseId(licenseId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 예약 조회
+        ReservationEntity reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new CustomException(ReservationErrorCode.RESERVATION_NOT_FOUND));
+
+        // 담당 예약인지 확인
+        if (!reservation.getDoctor().getDoctorId().equals(doctor.getDoctorId())) {
+            throw new CustomException(DoctorErrorCode.DOCTOR_NO_PERMISSION);
+        }
+
+        // 해당 예약의 질문들에 달린 답변 조회
+        List<QuestionRecommendEntity> questions = questionRecommendRepository.findAllByReservationOrderByCreatedAtDesc(reservation);
+
+        // entity -> dto
+        return questions.stream()
+                .flatMap(q -> answerResultRepository
+                        .findByQuestionAndPatient(q, reservation.getPatient())
+                        .stream())
+                .map(answerMapper::toResponse)
                 .toList();
     }
 }

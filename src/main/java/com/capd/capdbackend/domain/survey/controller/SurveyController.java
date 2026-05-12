@@ -1,5 +1,6 @@
 package com.capd.capdbackend.domain.survey.controller;
 
+import com.capd.capdbackend.domain.survey.dto.request.AnswerListRequest;
 import com.capd.capdbackend.domain.survey.dto.request.AnswerRequest;
 import com.capd.capdbackend.domain.survey.dto.response.AnswerResponse;
 import com.capd.capdbackend.domain.survey.dto.response.PatientQuestionResponse;
@@ -82,18 +83,18 @@ public class SurveyController {
     }
 
     // 환자가 승인된 질문 답변
-    @Operation(summary = "환자가 승인된 질문에 대한 답변", description = "환자가 승인된 질문에 대한 답변 API")
-    @PostMapping("/surveys/questions/{questionId}/answers")
-    public ResponseEntity<BaseResponse<AnswerResponse>> answerQuestion(
+    @Operation(summary = "설문 답변 제출", description = "환자가 승인된 질문에 대한 답변을 한 번에 제출하는 API")
+    @PostMapping("/surveys/{reservationId}/answers")
+    public ResponseEntity<BaseResponse<List<AnswerResponse>>> submitAnswers(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long questionId,
-            @RequestBody @Valid AnswerRequest request) {
+            @PathVariable Long reservationId,
+            @RequestBody @Valid AnswerListRequest request) {
 
         // service 호출
-        AnswerResponse response = surveyService.answerQuestion(userDetails.getIdentifier(), questionId, request);
+        List<AnswerResponse> response = surveyService.answerQuestion(userDetails.getIdentifier(), reservationId, request);
 
         // 응답 반환
-        return ResponseEntity.ok(BaseResponse.success(200, "질문 답변 성공", response));
+        return ResponseEntity.ok(BaseResponse.success(200, "답변 제출 성공", response));
     }
 
     // 의사가 특정 예약을 기준으로 질문 조회
@@ -108,5 +109,19 @@ public class SurveyController {
 
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "질문 목록 조회 성공", response));
+    }
+
+    // 의사가 특정 예약의 답변 목록 조회
+    @Operation(summary = "답변 목록 조회", description = "의사가 특정 예약의 환자 답변 목록을 조회하는 API")
+    @GetMapping("/surveys/{reservationId}/answers")
+    public ResponseEntity<BaseResponse<List<AnswerResponse>>> getDoctorAnswers(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long reservationId) {
+
+        // service 호출
+        List<AnswerResponse> response = surveyService.checkAnswer(userDetails.getIdentifier(), reservationId);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "답변 목록 조회 성공", response));
     }
 }
