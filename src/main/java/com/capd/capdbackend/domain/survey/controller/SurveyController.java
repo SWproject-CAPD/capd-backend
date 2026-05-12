@@ -1,5 +1,7 @@
 package com.capd.capdbackend.domain.survey.controller;
 
+import com.capd.capdbackend.domain.survey.dto.request.AnswerRequest;
+import com.capd.capdbackend.domain.survey.dto.response.AnswerResponse;
 import com.capd.capdbackend.domain.survey.dto.response.PatientQuestionResponse;
 import com.capd.capdbackend.domain.survey.dto.response.QuestionResponse;
 import com.capd.capdbackend.domain.survey.service.SurveyService;
@@ -7,6 +9,7 @@ import com.capd.capdbackend.global.response.BaseResponse;
 import com.capd.capdbackend.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -65,7 +68,7 @@ public class SurveyController {
     }
 
     // 환자가 승인된 질문 조회
-    @Operation(summary = "환자가 승인된 질문을 조회", description = "의사가 승인한 질문을 예약 날짜 전날까지 조회하는 API")
+    @Operation(summary = "환자가 승인된 질문을 조회", description = "환자가 의사가 승인한 질문을 예약 날짜 전날까지 조회하는 API")
     @GetMapping("/surveys/{reservationId}/patient/questions")
     public ResponseEntity<BaseResponse<List<PatientQuestionResponse>>> checkQuestion(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -76,5 +79,20 @@ public class SurveyController {
 
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "질문 조회 성공", response));
+    }
+
+    // 환자가 승인된 질문 답변
+    @Operation(summary = "환자가 승인된 질문에 대한 답변", description = "환자가 승인된 질문에 대한 답변 API")
+    @PostMapping("/surveys/questions/{questionId}/answers")
+    public ResponseEntity<BaseResponse<AnswerResponse>> answerQuestion(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long questionId,
+            @RequestBody @Valid AnswerRequest request) {
+
+        // service 호출
+        AnswerResponse response = surveyService.answerQuestion(userDetails.getIdentifier(), questionId, request);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "질문 답변 성공", response));
     }
 }
