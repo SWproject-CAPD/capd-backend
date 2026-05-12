@@ -95,4 +95,18 @@ public class SurveyController {
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "질문 답변 성공", response));
     }
+
+    // 의사가 특정 예약을 기준으로 질문 조회
+    @Operation(summary = "의사용 질문 목록 조회", description = "의사가 특정 예약의 질문 목록을 조회하는 API")
+    @GetMapping("/surveys/{reservationId}/questions")
+    public ResponseEntity<BaseResponse<List<QuestionResponse>>> getDoctorQuestions(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long reservationId) {
+
+        // service 호출
+        List<QuestionResponse> response = surveyService.checkReservationQuestion(userDetails.getIdentifier(), reservationId);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "질문 목록 조회 성공", response));
+    }
 }

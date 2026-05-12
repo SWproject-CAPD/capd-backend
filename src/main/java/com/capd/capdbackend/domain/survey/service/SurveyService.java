@@ -330,4 +330,28 @@ public class SurveyService {
         // entity -> dto
         return answerMapper.toResponse(answer);
     }
+
+    // 의사가 특정 예약에 대한 질문들 조회
+    public List<QuestionResponse> checkReservationQuestion(String licenseId, Long reservationId) {
+
+        // 의사 유저 조회
+        DoctorEntity doctor = doctorRepository.findByLicenseId(licenseId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 예약이 존재하는지 조회
+        ReservationEntity reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new CustomException(ReservationErrorCode.RESERVATION_NOT_FOUND));
+
+        // 담당 예약인지 확인
+        if (!reservation.getDoctor().getDoctorId().equals(doctor.getDoctorId())) {
+            throw new CustomException(DoctorErrorCode.DOCTOR_NO_PERMISSION);
+        }
+
+        // entity -> dto
+        return questionRecommendRepository
+                .findAllByReservationOrderByCreatedAtDesc(reservation)
+                .stream()
+                .map(questionMapper::toQuestionResponse)
+                .toList();
+    }
 }
