@@ -16,6 +16,7 @@ import com.capd.capdbackend.domain.survey.dto.response.QuestionResponse;
 import com.capd.capdbackend.domain.survey.entity.QuestionRecommendEntity;
 import com.capd.capdbackend.domain.survey.entity.QuestionStatus;
 import com.capd.capdbackend.domain.survey.entity.QuestionType;
+import com.capd.capdbackend.domain.survey.exception.SurveyErrorCode;
 import com.capd.capdbackend.domain.survey.mapper.AnswerMapper;
 import com.capd.capdbackend.domain.survey.mapper.QuestionMapper;
 import com.capd.capdbackend.domain.survey.repository.AnswerResultRepository;
@@ -192,5 +193,59 @@ public class SurveyService {
             log.error("Gemini 응답 파싱 실패: {}", e.getMessage());
             throw new RuntimeException("Gemini 응답 파싱 실패");
         }
+    }
+
+    // 질문 승인
+    @Transactional
+    public QuestionResponse approveQuestion(String licenseId, Long questionId) {
+
+        // 의사 유저 조회
+        DoctorEntity doctor = doctorRepository.findByLicenseId(licenseId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 질문이 있는지 조회
+        QuestionRecommendEntity question = questionRecommendRepository.findByQuestionId(questionId)
+                .orElseThrow(() -> new CustomException(SurveyErrorCode.QUESTION_NOT_FOUND));
+
+        // 의사의 본인의 질문인지 확인
+        if (!question.getDoctor().getDoctorId().equals(doctor.getDoctorId())) {
+            throw new CustomException(SurveyErrorCode.QUESTION_NO_PERMISSION);
+        }
+
+        // 승인
+        question.approve();
+
+        // 로그 출력
+        log.info("질문 승인 완료: questionId={}", questionId);
+
+        // entity -> dto
+        return questionMapper.toQuestionResponse(question);
+    }
+
+    // 질문 거절
+    @Transactional
+    public QuestionResponse rejectQuestion(String licenseId, Long questionId) {
+
+        // 의사 유저 조회
+        DoctorEntity doctor = doctorRepository.findByLicenseId(licenseId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 질문이 있는지 조회
+        QuestionRecommendEntity question = questionRecommendRepository.findByQuestionId(questionId)
+                .orElseThrow(() -> new CustomException(SurveyErrorCode.QUESTION_NOT_FOUND));
+
+        // 본인 질문인지 확인
+        if (!question.getDoctor().getDoctorId().equals(doctor.getDoctorId())) {
+            throw new CustomException(SurveyErrorCode.QUESTION_NO_PERMISSION);
+        }
+
+        // 거절
+        question.reject();
+
+        // 로그 출력
+        log.info("질문 거절 완료: questionId={}", questionId);
+
+        // entity -> dto
+        return questionMapper.toQuestionResponse(question);
     }
 }
