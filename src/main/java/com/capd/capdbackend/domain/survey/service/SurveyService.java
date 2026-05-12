@@ -12,6 +12,7 @@ import com.capd.capdbackend.domain.report.client.GeminiApiClient;
 import com.capd.capdbackend.domain.reservation.entity.ReservationEntity;
 import com.capd.capdbackend.domain.reservation.exception.ReservationErrorCode;
 import com.capd.capdbackend.domain.reservation.repository.ReservationRepository;
+import com.capd.capdbackend.domain.survey.dto.response.PatientQuestionResponse;
 import com.capd.capdbackend.domain.survey.dto.response.QuestionResponse;
 import com.capd.capdbackend.domain.survey.entity.QuestionRecommendEntity;
 import com.capd.capdbackend.domain.survey.entity.QuestionStatus;
@@ -247,5 +248,33 @@ public class SurveyService {
 
         // entity -> dto
         return questionMapper.toQuestionResponse(question);
+    }
+
+    // 환자가 의사가 승인한 질문 조회
+    public List<PatientQuestionResponse> checkQuestion(String email, Long reservationId) {
+
+        // 환자 유저 조회
+        PatientEntity patient = patientRepository.findByUserEmail(email)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 예약이 존재하는지 조회
+        ReservationEntity reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new CustomException(ReservationErrorCode.RESERVATION_NOT_FOUND));
+
+        // 본인 예약인지 확인
+        if (!reservation.getPatient().getPatientId().equals(patient.getPatientId())) {
+            throw new CustomException(ReservationErrorCode.RESERVATION_NO_PERMISSION);
+        }
+
+        // 예약 전날까지만 조회 가능
+        LocalDate deadline = reservation.getReservationDate().toLocalDate().minusDays(1);
+        if (LocalDate.now().isAfter(deadline)) {
+            throw new CustomException(SurveyErrorCode.ANSWER_DEADLINE_PASSED);
+        }
+
+        // entity -> dto
+        return questionRecommendRepository.findAllByReservationAndStatusOrderByCreatedAtDesc(reservation, QuestionStatus.APPROVED).stream()
+                .map(questionMapper::toPatientQuestionResponse)
+                .toList();
     }
 }

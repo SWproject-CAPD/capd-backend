@@ -15,8 +15,8 @@ public interface QuestionRecommendRepository extends JpaRepository<QuestionRecom
     // 의사가 특정 예약의 질문 목록 조회
     List<QuestionRecommendEntity> findAllByReservationOrderByCreatedAtDesc(ReservationEntity reservation);
 
-    // 환자가 본인의 승인된 질문 조회
-    List<QuestionRecommendEntity> findAllByPatientAndStatusOrderByCreatedAtDesc(PatientEntity patient, QuestionStatus status);
+    // 환자가 예약된 날짜를 기준으로 승인된 질문 조회
+    List<QuestionRecommendEntity> findAllByReservationAndStatusOrderByCreatedAtDesc(ReservationEntity reservation, QuestionStatus status);
 
     // 질문 ID로 조회
     Optional<QuestionRecommendEntity> findByQuestionId(Long questionId);
