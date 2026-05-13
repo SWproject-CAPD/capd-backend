@@ -31,9 +31,6 @@ public class AnswerResponse {
     @Schema(description = "답변 내용", example = "국물류")
     private String answer;
 
-    @Schema(description = "AI 설명")
-    private String aiExplain;
-
     @Schema(description = "답변 일시")
     private LocalDateTime createdAt;
 }
