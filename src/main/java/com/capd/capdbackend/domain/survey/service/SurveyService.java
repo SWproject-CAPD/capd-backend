@@ -96,8 +96,7 @@ public class SurveyService {
             try {
                 // List 형태를 JSON 문자열로 변환
                 options = objectMapper.writeValueAsString(parsed.get("options"));
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 log.error("options 파싱 실패: {}", e.getMessage());
             }
         }
@@ -147,40 +146,40 @@ public class SurveyService {
         }
 
         return String.format("""
-                당신은 CAPD(복막투석) 전문 의료 AI 어시스턴트입니다.
-                아래는 %s 환자의 최근 투석 데이터입니다.
-                                
-                %s
-                                
-                위 데이터를 바탕으로 진료 전 환자에게 물어볼 질문 1개를 생성해주세요.
-                질문 유형은 MULTIPLE_CHOICE, YES_NO, DESCRIPTIVE 중 하나를 선택하세요.
-                                
-                반드시 아래 JSON 형식으로만 응답해주세요. 다른 텍스트는 포함하지 마세요.
-                                
-                객관식 예시:
-                {
-                  "questionType": "MULTIPLE_CHOICE",
-                  "questionText": "어제 저녁 식사로 주로 어떤 음식을 드셨나요?",
-                  "options": ["국물류", "튀김류", "육류", "채소류", "기타"],
-                  "questionReason": "최근 체중 증가 추세로 식단 관련 질문 추천"
-                }
-                                
-                예/아니요 예시:
-                {
-                  "questionType": "YES_NO",
-                  "questionText": "어제 처방받은 혈압약을 제시간에 복용하셨나요?",
-                  "options": ["예", "아니요"],
-                  "questionReason": "혈압 수치가 높은 편으로 약 복용 여부 확인 필요"
-                }
-                                
-                서술형 예시:
-                {
-                  "questionType": "DESCRIPTIVE",
-                  "questionText": "최근 투석액을 배액할 때 불편함이 있었다면 어떤 느낌인지 적어주세요.",
-                  "options": null,
-                  "questionReason": "배액 혼탁 발생으로 증상 파악 필요"
-                }
-                """,
+                        당신은 CAPD(복막투석) 전문 의료 AI 어시스턴트입니다.
+                        아래는 %s 환자의 최근 투석 데이터입니다.
+                        
+                        %s
+                        
+                        위 데이터를 바탕으로 진료 전 환자에게 물어볼 질문 1개를 생성해주세요.
+                        질문 유형은 MULTIPLE_CHOICE, YES_NO, DESCRIPTIVE 중 하나를 선택하세요.
+                        
+                        반드시 아래 JSON 형식으로만 응답해주세요. 다른 텍스트는 포함하지 마세요.
+                        
+                        객관식 예시:
+                        {
+                          "questionType": "MULTIPLE_CHOICE",
+                          "questionText": "어제 저녁 식사로 주로 어떤 음식을 드셨나요?",
+                          "options": ["국물류", "튀김류", "육류", "채소류", "기타"],
+                          "questionReason": "최근 체중 증가 추세로 식단 관련 질문 추천"
+                        }
+                        
+                        예/아니요 예시:
+                        {
+                          "questionType": "YES_NO",
+                          "questionText": "어제 처방받은 혈압약을 제시간에 복용하셨나요?",
+                          "options": ["예", "아니요"],
+                          "questionReason": "혈압 수치가 높은 편으로 약 복용 여부 확인 필요"
+                        }
+                        
+                        서술형 예시:
+                        {
+                          "questionType": "DESCRIPTIVE",
+                          "questionText": "최근 투석액을 배액할 때 불편함이 있었다면 어떤 느낌인지 적어주세요.",
+                          "options": null,
+                          "questionReason": "배액 혼탁 발생으로 증상 파악 필요"
+                        }
+                        """,
                 patientName, dataBuilder.toString()
         );
     }
@@ -194,8 +193,7 @@ public class SurveyService {
                     .replaceAll("```", "")
                     .trim();
             return objectMapper.readValue(cleaned, Map.class);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Gemini 응답 파싱 실패: {}", e.getMessage());
             throw new RuntimeException("Gemini 응답 파싱 실패");
         }
@@ -426,5 +424,50 @@ public class SurveyService {
 
         // entity -> dto
         return questionMapper.toQuestionResponse(question);
+    }
+
+    // 환자가 질문이 이해가 안될때 AI에게 설명 요청
+    @Transactional
+    public String explainQuestion(String email, Long questionId) {
+
+        // 환자 조회
+        PatientEntity patient = patientRepository.findByUserEmail(email)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 질문 조회
+        QuestionRecommendEntity question = questionRecommendRepository.findByQuestionId(questionId)
+                .orElseThrow(() -> new CustomException(SurveyErrorCode.QUESTION_NOT_FOUND));
+
+        // 본인 질문인지 확인
+        if (!question.getPatient().getPatientId().equals(patient.getPatientId())) {
+            throw new CustomException(SurveyErrorCode.QUESTION_NO_PERMISSION);
+        }
+
+        // 승인된 질문인지 확인
+        if (question.getStatus() != QuestionStatus.APPROVED) {
+            throw new CustomException(SurveyErrorCode.QUESTION_NOT_APPROVED);
+        }
+
+        // 이미 답변한 질문이면 해석 불가
+        if (answerResultRepository.existsByQuestionAndPatient(question, patient)) {
+            throw new CustomException(SurveyErrorCode.QUESTION_ALREADY_ANSWERED);
+        }
+
+        // Gemini 프롬프트 구성
+        String prompt = String.format("""
+                당신은 CAPD(복막투석) 환자를 돕는 AI 어시스턴트입니다.
+                아래 의료 질문을 환자가 이해하기 쉬운 말로 설명해주세요.
+                전문 용어는 쉬운 말로 바꾸고 3문장 이내로 설명해주세요.
+                
+                질문: %s
+                """, question.getQuestion());
+
+        // Gemini 호출후 반환
+        String aiExplain = geminiApiClient.generateContent(prompt);
+
+        // 로그 출력
+        log.info("AI 설명 생성 완료: questionId={}", questionId);
+
+        return aiExplain;
     }
 }

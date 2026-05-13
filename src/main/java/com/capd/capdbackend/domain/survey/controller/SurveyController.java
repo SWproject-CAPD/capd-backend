@@ -1,7 +1,6 @@
 package com.capd.capdbackend.domain.survey.controller;
 
 import com.capd.capdbackend.domain.survey.dto.request.AnswerListRequest;
-import com.capd.capdbackend.domain.survey.dto.request.AnswerRequest;
 import com.capd.capdbackend.domain.survey.dto.response.AnswerResponse;
 import com.capd.capdbackend.domain.survey.dto.response.PatientQuestionResponse;
 import com.capd.capdbackend.domain.survey.dto.response.QuestionResponse;
@@ -137,5 +136,19 @@ public class SurveyController {
 
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "질문 상태 되돌리기 성공", response));
+    }
+
+    // 질문 의미 ai 요청
+    @Operation(summary = "AI에게 질문 해석 요청", description = "환자가 질문이 이해가 가지 않을때 AI에게 해석을 요청해 질문의 의도를 파악하는 API")
+    @PostMapping("/surveys/questions/{questionId}/explain")
+    public ResponseEntity<BaseResponse<String>> explainQuestion(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long questionId) {
+
+        // service 호출
+        String response = surveyService.explainQuestion(userDetails.getIdentifier(), questionId);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "AI 설명 생성 성공", response));
     }
 }
