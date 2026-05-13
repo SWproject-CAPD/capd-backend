@@ -30,8 +30,4 @@ public class AnswerResultEntity extends BaseTimeEntity {
 
     @Column(nullable = false, length = 1000)
     private String answer; // 환자 응답 내용
-
-    @Column(length = 1000)
-    private String aiExplain; // 환자가 질문을 이해하기 어려울 때 AI가 제공하는 쉬운 말 풀이
-
 }

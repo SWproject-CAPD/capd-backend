@@ -16,7 +16,6 @@ public class AnswerMapper {
                 .patientName(entity.getPatient().getUser().getUserName())
                 .question(entity.getQuestion().getQuestion())
                 .answer(entity.getAnswer())
-                .aiExplain(entity.getAiExplain())
                 .createdAt(entity.getCreatedAt())
                 .build();
     }
