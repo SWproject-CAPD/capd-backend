@@ -395,4 +395,36 @@ public class SurveyService {
                 .map(answerMapper::toResponse)
                 .toList();
     }
+
+    // 승인, 거절한 질문 되돌리기
+    @Transactional
+    public QuestionResponse resetQuestion(String licenseId, Long questionId) {
+
+        // 의사 유저 조회
+        DoctorEntity doctor = doctorRepository.findByLicenseId(licenseId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 질문 조회
+        QuestionRecommendEntity question = questionRecommendRepository.findByQuestionId(questionId)
+                .orElseThrow(() -> new CustomException(SurveyErrorCode.QUESTION_NOT_FOUND));
+
+        // 본인 질문인지 확인
+        if (!question.getDoctor().getDoctorId().equals(doctor.getDoctorId())) {
+            throw new CustomException(SurveyErrorCode.QUESTION_NO_PERMISSION);
+        }
+
+        // 환자가 답변했는지 확인
+        if (answerResultRepository.existsByQuestionAndPatient(question, question.getPatient())) {
+            throw new CustomException(SurveyErrorCode.QUESTION_ALREADY_ANSWERED);
+        }
+
+        // 되돌리기
+        question.reset();
+
+        // 로그 출력
+        log.info("질문 상태 되돌리기 완료: questionId={}", questionId);
+
+        // entity -> dto
+        return questionMapper.toQuestionResponse(question);
+    }
 }
