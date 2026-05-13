@@ -124,4 +124,18 @@ public class SurveyController {
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "답변 목록 조회 성공", response));
     }
+
+    // 질문 상태 되돌리기
+    @Operation(summary = "질문 상태 되돌리기", description = "의사가 승인/거절한 질문을 다시 초기 상태로 되돌리는 API")
+    @PatchMapping("/surveys/questions/{questionId}/reset")
+    public ResponseEntity<BaseResponse<QuestionResponse>> resetQuestion(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long questionId) {
+
+        // service 호출
+        QuestionResponse response = surveyService.resetQuestion(userDetails.getIdentifier(), questionId);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "질문 상태 되돌리기 성공", response));
+    }
 }

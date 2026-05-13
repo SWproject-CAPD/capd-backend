@@ -60,4 +60,9 @@ public class QuestionRecommendEntity extends BaseTimeEntity {
     public void reject() {
         this.status = QuestionStatus.REJECTED;
     }
+
+    // 되돌리기
+    public void reset() {
+        this.status = QuestionStatus.PENDING;
+    }
 }
