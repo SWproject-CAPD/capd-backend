@@ -4,8 +4,22 @@ from typing import List
 import joblib
 import numpy as np
 import pandas as pd
+import os
+import chromadb
+import requests as req
+from dotenv import load_dotenv
 
 app = FastAPI(title="CAPD AI Doctor API")
+
+# 환경변수 로드
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+
+# ChromaDB 클라이언트 로드
+CHROMA_DIR = os.path.join(os.path.dirname(__file__), '..', 'chromadb')
+chroma_client = chromadb.PersistentClient(path=CHROMA_DIR)
+collection = chroma_client.get_collection(name="kdigo_guidelines")
+print("ChromaDB 로드 완료!")
 
 print("Loading AI Models...")
 model = joblib.load('../models/isolation_forest.pkl')
@@ -141,3 +155,147 @@ def predict_anomaly(request: AnomalyRequest):
 @app.get("/health")
 def health_check():
     return {"status": "ok", "model": "isolation_forest"}
+
+# 챗봇 Request 모델
+class RecentRecord(BaseModel):
+    date: str
+    body_weight_kg: float
+    systolic_bp: float
+    diastolic_bp: float
+    fasting_blood_sugar: float
+    total_ultrafiltration: float
+
+class PatientData(BaseModel):
+    patient_name: str
+    recent_records: List[RecentRecord]
+
+class ChatRequest(BaseModel):
+    user_type: str  # PATIENT or DOCTOR
+    user_message: str
+    patient_data: PatientData
+
+# 임베딩 생성 함수
+def get_embedding(text):
+    """Gemini API로 텍스트 임베딩 생성"""
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key={GEMINI_API_KEY}"
+
+    payload = {
+        "model": "models/gemini-embedding-001",
+        "content": {
+            "parts": [{"text": text}]
+        }
+    }
+
+    response = req.post(url, json=payload)
+
+    if response.status_code == 200:
+        return response.json()['embedding']['values']
+    else:
+        raise Exception(f"임베딩 생성 실패: {response.text}")
+
+# ChromaDB 검색 함수
+def search_kdigo(query, n_results=3):
+    """ChromaDB에서 유사한 KDIGO 내용 검색"""
+
+    # 질문을 임베딩으로 변환
+    query_embedding = get_embedding(query)
+
+    # 유사한 문서 검색
+    results = collection.query(
+        query_embeddings=[query_embedding],
+        n_results=n_results
+    )
+
+    # 검색된 문서 텍스트 합치기
+    documents = results['documents'][0]
+    sources = [m['source'] for m in results['metadatas'][0]]
+
+    return documents, sources
+
+# Gemini 답변 생성 함수
+def generate_answer(prompt):
+    """Gemini API로 답변 생성"""
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={GEMINI_API_KEY}"
+
+    payload = {
+        "contents": [
+            {
+                "parts": [{"text": prompt}]
+            }
+        ]
+    }
+
+    response = req.post(url, json=payload)
+
+    if response.status_code == 200:
+        candidates = response.json()['candidates']
+        return candidates[0]['content']['parts'][0]['text']
+    else:
+        raise Exception(f"답변 생성 실패: {response.text}")
+
+# 챗봇 엔드포인트
+@app.post("/api/chat")
+def chat(request: ChatRequest):
+
+    print(f"\n=== 챗봇 요청 ===")
+    print(f"user_type: {request.user_type}")
+    print(f"user_message: {request.user_message}")
+    print(f"==================\n")
+
+    # ChromaDB에서 관련 KDIGO 내용 검색
+    kdigo_docs, sources = search_kdigo(request.user_message)
+    kdigo_context = "\n\n".join(kdigo_docs)
+
+    # 환자 데이터 텍스트로 변환
+    patient_data_text = f"환자명: {request.patient_data.patient_name}\n\n최근 투석 데이터:\n"
+    for record in request.patient_data.recent_records:
+        patient_data_text += (
+            f"날짜: {record.date}, "
+            f"체중: {record.body_weight_kg}kg, "
+            f"혈압: {record.systolic_bp}/{record.diastolic_bp}mmHg, "
+            f"혈당: {record.fasting_blood_sugar}mg/dL, "
+            f"총초여과량: {record.total_ultrafiltration}g\n"
+        )
+
+    # 사용자 유형에 따라 프롬프트 구성
+    if request.user_type == "PATIENT":
+        prompt = f"""당신은 CAPD(복막투석) 환자를 돕는 친절한 AI 어시스턴트입니다.
+아래 KDIGO 가이드라인과 환자 데이터를 참고하여 환자의 질문에 쉽고 친절하게 답변해주세요.
+전문 용어는 최대한 쉬운 말로 설명해주세요.
+
+[KDIGO 가이드라인 참고 내용]
+{kdigo_context}
+
+[환자 데이터]
+{patient_data_text}
+
+[환자 질문]
+{request.user_message}
+
+답변은 한국어로 3~5문장으로 작성해주세요."""
+
+    else:  # DOCTOR
+        prompt = f"""당신은 CAPD(복막투석) 전문 의료 AI 어시스턴트입니다.
+아래 KDIGO 가이드라인과 환자 데이터를 참고하여 의사의 질문에 전문적으로 답변해주세요.
+
+[KDIGO 가이드라인 참고 내용]
+{kdigo_context}
+
+[환자 데이터]
+{patient_data_text}
+
+[의사 질문]
+{request.user_message}
+
+답변은 한국어로 전문적이고 명확하게 작성해주세요."""
+
+    # 4. Gemini로 답변 생성
+    ai_answer = generate_answer(prompt)
+
+    print(f"답변 생성 완료")
+
+    return {
+        "user_message": request.user_message,
+        "ai_answer": ai_answer,
+        "kdigo_sources": list(set(sources))
+    }
