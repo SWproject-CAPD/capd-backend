@@ -38,14 +38,23 @@ out/
 
 src/main/resources/application.properties
 
-# --- Python & Machine Learning ---
+### Python & Machine Learning ###
 **/__pycache__/
 *.pyc
 venv/
 
-# 무적의 와일드카드: 프로젝트 안의 '어디에 있든' 아래 확장자는 전부 무시!
+### 아래 확장자는 전부 무시 ###
 **/*.pkl
 **/*.joblib
 **/*.h5
 
 .DS_Store
+
+# KDIGO PDF 파일 제외
+ml/data/kdigo/
+
+# ChromaDB 데이터 제외
+ml/chromadb/
+
+# Python 환경변수 파일
+ml/.env
