@@ -160,8 +160,8 @@ def health_check():
 class RecentRecord(BaseModel):
     date: str
     body_weight_kg: float
-    systolic_bp: float
-    diastolic_bp: float
+    systolic_bp_mmhg: float
+    diastolic_bp_mmhg: float
     fasting_blood_sugar: float
     total_ultrafiltration: float
 
@@ -240,6 +240,8 @@ def chat(request: ChatRequest):
     print(f"\n=== 챗봇 요청 ===")
     print(f"user_type: {request.user_type}")
     print(f"user_message: {request.user_message}")
+    print(f"patient_name: {request.patient_data.patient_name}")
+    print(f"records: {request.patient_data.recent_records}")
     print(f"==================\n")
 
     # ChromaDB에서 관련 KDIGO 내용 검색
@@ -248,14 +250,18 @@ def chat(request: ChatRequest):
 
     # 환자 데이터 텍스트로 변환
     patient_data_text = f"환자명: {request.patient_data.patient_name}\n\n최근 투석 데이터:\n"
-    for record in request.patient_data.recent_records:
-        patient_data_text += (
-            f"날짜: {record.date}, "
-            f"체중: {record.body_weight_kg}kg, "
-            f"혈압: {record.systolic_bp}/{record.diastolic_bp}mmHg, "
-            f"혈당: {record.fasting_blood_sugar}mg/dL, "
-            f"총초여과량: {record.total_ultrafiltration}g\n"
-        )
+
+    if request.patient_data.recent_records:
+        for record in request.patient_data.recent_records:
+            patient_data_text += (
+                f"날짜: {record.date}, "
+                f"체중: {record.body_weight_kg}kg, "
+                f"혈압: {record.systolic_bp_mmhg}/{record.diastolic_bp_mmhg}mmHg, "
+                f"혈당: {record.fasting_blood_sugar}mg/dL, "
+                f"총초여과량: {record.total_ultrafiltration}g\n"
+            )
+    else:
+        patient_data_text += "최근 투석 데이터 없음\n"
 
     # 사용자 유형에 따라 프롬프트 구성
     if request.user_type == "PATIENT":
@@ -274,7 +280,7 @@ def chat(request: ChatRequest):
 
 답변은 한국어로 3~5문장으로 작성해주세요."""
 
-    else:  # DOCTOR
+    else:
         prompt = f"""당신은 CAPD(복막투석) 전문 의료 AI 어시스턴트입니다.
 아래 KDIGO 가이드라인과 환자 데이터를 참고하여 의사의 질문에 전문적으로 답변해주세요.
 
@@ -289,7 +295,6 @@ def chat(request: ChatRequest):
 
 답변은 한국어로 전문적이고 명확하게 작성해주세요."""
 
-    # 4. Gemini로 답변 생성
     ai_answer = generate_answer(prompt)
 
     print(f"답변 생성 완료")
