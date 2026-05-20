@@ -36,7 +36,7 @@ public class ReportService {
     private final DoctorRepository doctorRepository;
     private final GeminiApiClient geminiApiClient;
     private final ReportMapper reportMapper;
-    private final PdfGeneratorService pdfGeneratorService;
+    private final PdfCreateService pdfCreateService;
     private final GcpStorageService gcpStorageService;
 
     // 주간 보고서 생성 (월 + 주차 선택)
@@ -251,7 +251,7 @@ public class ReportService {
         }
 
         // PDF 생성
-        byte[] pdfBytes = pdfGeneratorService.generateReportPdf(report);
+        byte[] pdfBytes = pdfCreateService.generateReportPdf(report);
 
         // GCP에 업로드
         String fileName = String.format("reports/%d_%s_%s.pdf",
