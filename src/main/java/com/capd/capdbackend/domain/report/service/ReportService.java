@@ -36,6 +36,8 @@ public class ReportService {
     private final DoctorRepository doctorRepository;
     private final GeminiApiClient geminiApiClient;
     private final ReportMapper reportMapper;
+    private final PdfGeneratorService pdfGeneratorService;
+    private final GcpStorageService gcpStorageService;
 
     // 주간 보고서 생성 (월 + 주차 선택)
     @Transactional
@@ -229,5 +231,41 @@ public class ReportService {
                 bloodSugarSummary, ufSummary,
                 anomalySummary
         );
+    }
+
+    // pdf 생성
+    @Transactional
+    public String createPdf(String licenseId, Long reportId) {
+
+        // 의사 유저 조회
+        DoctorEntity doctor = doctorRepository.findByLicenseId(licenseId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 보고서 조회
+        ReportEntity report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new CustomException(ReportErrorCode.REPORT_NOT_FOUND));
+
+        // 담당 의사인지 확인
+        if (!report.getDoctor().getDoctorId().equals(doctor.getDoctorId())) {
+            throw new CustomException(DoctorErrorCode.DOCTOR_NO_PERMISSION);
+        }
+
+        // PDF 생성
+        byte[] pdfBytes = pdfGeneratorService.generateReportPdf(report);
+
+        // GCP에 업로드
+        String fileName = String.format("reports/%d_%s_%s.pdf",
+                report.getPatient().getPatientId(),
+                report.getStartDate(),
+                report.getEndDate());
+        String pdfUrl = gcpStorageService.uploadPdf(pdfBytes, fileName);
+
+        // PDF URL 저장
+        report.updateDocSaveLocation(pdfUrl);
+
+        // 로그 출력
+        log.info("PDF 생성 완료: reportId={}, url={}", reportId, pdfUrl);
+
+        return pdfUrl;
     }
 }

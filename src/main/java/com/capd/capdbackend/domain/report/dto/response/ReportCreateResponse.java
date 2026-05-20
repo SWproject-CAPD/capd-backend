@@ -51,4 +51,7 @@ public class ReportCreateResponse {
 
     @Schema(description = "AI 종합 소견")
     private String docSummary;
+
+    @Schema(description = "PDF 저장 경로")
+    private String docSaveLocation;
 }

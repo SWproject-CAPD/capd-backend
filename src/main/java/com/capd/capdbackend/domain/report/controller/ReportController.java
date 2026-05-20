@@ -52,4 +52,17 @@ public class ReportController {
         return ResponseEntity.ok(BaseResponse.success(200, "보고서 조회 성공", response));
     }
 
+    // PDF 생성
+    @Operation(summary = "주간 보고서 PDF 생성", description = "저장된 보고서를 PDF로 생성하는 API")
+    @PostMapping("/reports/{reportId}/pdf")
+    public ResponseEntity<BaseResponse<String>> createPdf(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long reportId) {
+
+        // service 호출
+        String pdfUrl = reportService.createPdf(userDetails.getIdentifier(), reportId);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "PDF 생성 성공", pdfUrl));
+    }
 }
