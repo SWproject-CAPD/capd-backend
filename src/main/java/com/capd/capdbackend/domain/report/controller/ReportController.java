@@ -65,4 +65,18 @@ public class ReportController {
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "PDF 생성 성공", pdfUrl));
     }
+
+    // PDF URL 조회
+    @Operation(summary = "PDF URL 조회", description = "생성된 PDF의 URL을 조회하는 API")
+    @GetMapping("/reports/{reportId}/pdf")
+    public ResponseEntity<BaseResponse<String>> getPdfUrl(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long reportId) {
+
+        // service 호출
+        String pdfUrl = reportService.getPdfUrl(userDetails.getIdentifier(), reportId);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "PDF URL 조회 성공", pdfUrl));
+    }
 }

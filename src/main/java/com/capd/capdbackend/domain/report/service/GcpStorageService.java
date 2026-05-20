@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URL;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -42,18 +44,32 @@ public class GcpStorageService {
                     .build();
 
             storage.create(blobInfo, pdfBytes);
+            log.info("PDF 업로드 완료: {}", fileName);
 
-            // 공개 URL 반환
-            String url = String.format(
-                    "https://storage.googleapis.com/%s/%s",
-                    bucketName, fileName);
+            return fileName; // 파일명 반환
 
-            log.info("PDF 업로드 완료: {}", url);
-            return url;
-
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("PDF 업로드 실패: {}", e.getMessage());
             throw new RuntimeException("PDF 업로드 실패: " + e.getMessage());
+        }
+    }
+
+    // 서명된 URL 생성 추가
+    public String createSignUrl(String fileName) {
+        try {
+            BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, fileName).build();
+            URL signedUrl = storage.signUrl(
+                    blobInfo,
+                    1,
+                    TimeUnit.HOURS,
+                    Storage.SignUrlOption.withV4Signature()
+            );
+            return signedUrl.toString();
+        }
+        catch (Exception e) {
+            log.error("서명된 URL 생성 실패: {}", e.getMessage());
+            throw new RuntimeException("서명된 URL 생성 실패: " + e.getMessage());
         }
     }
 }
