@@ -19,7 +19,7 @@ import java.io.ByteArrayOutputStream;
 
 @Service
 @Slf4j
-public class PdfGeneratorService {
+public class PdfCreateService {
 
     public byte[] generateReportPdf(ReportEntity report) {
         try {
