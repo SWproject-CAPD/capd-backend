@@ -22,6 +22,7 @@ public class ReportMapper {
                 .ufSummary(entity.getUfSummary())
                 .anomalySummary(entity.getAnomalySummary())
                 .docSummary(entity.getDocSummary())
+                .docSaveLocation(entity.getDocSaveLocation())
                 .build();
     }
 

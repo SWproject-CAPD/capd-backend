@@ -54,4 +54,12 @@ public class ReportEntity extends BaseTimeEntity {
 
     @Column(length = 2000)
     private String docSummary; // 보고서 AI 요약
+
+    @Column(length = 500)
+    private String docSaveLocation; // pdf 저장 경
+
+    // pdf URL 업데이트 메서드
+    public void updateDocSaveLocation(String docSaveLocation) {
+        this.docSaveLocation = docSaveLocation;
+    }
 }
