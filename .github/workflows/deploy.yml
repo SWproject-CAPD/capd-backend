@@ -44,7 +44,30 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew clean build -x test
 
-      # 5. SSH 키 설정
+      # 5. GCP 인증
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      # 6. Docker를 GCP Artifact Registry에 인증
+      - name: Configure Docker for GCP
+        run: |
+          gcloud auth configure-docker asia-northeast3-docker.pkg.dev
+
+      # 7. Spring Boot Docker 이미지 빌드 및 푸시
+      - name: Build and Push Spring Boot Image
+        run: |
+          docker build -t asia-northeast3-docker.pkg.dev/skuniv-training-1/capd-repo/capd-backend:latest .
+          docker push asia-northeast3-docker.pkg.dev/skuniv-training-1/capd-repo/capd-backend:latest
+
+      # 8. FastAPI Docker 이미지 빌드 및 푸시
+      - name: Build and Push FastAPI Image
+        run: |
+          docker build -t asia-northeast3-docker.pkg.dev/skuniv-training-1/capd-repo/capd-fastapi:latest ./ml
+          docker push asia-northeast3-docker.pkg.dev/skuniv-training-1/capd-repo/capd-fastapi:latest
+
+      # 9. SSH 키 설정
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
@@ -52,14 +75,7 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.GCP_HOST }} >> ~/.ssh/known_hosts
 
-      # 6. JAR 파일 전송
-      - name: Copy JAR to server
-        run: |
-          scp -i ~/.ssh/deploy_key \
-            build/libs/*-SNAPSHOT.jar \
-            ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }}:/home/jmo02_kim/app.jar
-
-      # 7. GCP 서비스 계정 키 전송
+      # 10. GCP 서비스 계정 키 전송
       - name: Copy GCP credentials
         run: |
           echo '${{ secrets.GCP_CREDENTIALS }}' > /tmp/gcp-credentials.json
@@ -67,10 +83,35 @@ jobs:
             /tmp/gcp-credentials.json \
             ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }}:/home/jmo02_kim/gcp-credentials.json
 
-      # 8. 서버 재시작
-      - name: Restart Spring Boot
+      # 11. VM에서 컨테이너 실행
+      - name: Deploy containers on VM
         run: |
           ssh -i ~/.ssh/deploy_key \
-            ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} \
-            "pkill -f 'java -jar' || true && \
-             nohup java -jar /home/jmo02_kim/app.jar > /home/jmo02_kim/app.log 2>&1 &"
+            ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }} << 'ENDSSH'
+            # GCP Artifact Registry 인증
+            gcloud auth configure-docker asia-northeast3-docker.pkg.dev --quiet
+
+            # 기존 컨테이너 중지 및 제거
+            docker stop capd-backend || true
+            docker rm capd-backend || true
+            docker stop capd-fastapi || true
+            docker rm capd-fastapi || true
+
+            # 최신 이미지 pull
+            docker pull asia-northeast3-docker.pkg.dev/skuniv-training-1/capd-repo/capd-backend:latest
+            docker pull asia-northeast3-docker.pkg.dev/skuniv-training-1/capd-repo/capd-fastapi:latest
+
+            # Spring Boot 컨테이너 실행
+            docker run -d \
+              --name capd-backend \
+              --network host \
+              -v /home/jmo02_kim/gcp-credentials.json:/home/jmo02_kim/gcp-credentials.json \
+              asia-northeast3-docker.pkg.dev/skuniv-training-1/capd-repo/capd-backend:latest
+
+            # FastAPI 컨테이너 실행
+            docker run -d \
+              --name capd-fastapi \
+              --network host \
+              -e GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
+              asia-northeast3-docker.pkg.dev/skuniv-training-1/capd-repo/capd-fastapi:latest
+          ENDSSH
