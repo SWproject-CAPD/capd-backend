@@ -37,3 +37,25 @@ out/
 .vscode/
 
 src/main/resources/application.properties
+src/main/resources/gcp-credentials.json
+
+### Python & Machine Learning ###
+**/__pycache__/
+*.pyc
+venv/
+
+### 아래 확장자는 전부 무시 ###
+**/*.pkl
+**/*.joblib
+**/*.h5
+
+.DS_Store
+
+# KDIGO PDF 파일 제외
+ml/data/kdigo/
+
+# ChromaDB 데이터 제외
+ml/chromadb/
+
+# Python 환경변수 파일
+ml/.env
