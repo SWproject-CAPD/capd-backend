@@ -38,6 +38,7 @@ jobs:
           gcp.storage.bucket-name=${{ secrets.GCP_BUCKET_NAME }}
           gcp.storage.credentials-path=/home/jmo02_kim/gcp-credentials.json
           ml.server.url=http://localhost:8000
+          cors.allowed-origins=http://localhost:3000
           EOF
 
       # 4. Gradle 빌드
