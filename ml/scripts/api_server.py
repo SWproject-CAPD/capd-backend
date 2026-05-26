@@ -22,8 +22,9 @@ collection = chroma_client.get_collection(name="kdigo_guidelines")
 print("ChromaDB 로드 완료!")
 
 print("Loading AI Models...")
-model = joblib.load('../models/isolation_forest.pkl')
-scaler = joblib.load('../models/scaler.pkl')
+MODEL_DIR = os.path.join(os.path.dirname(__file__), '..', 'models')
+model = joblib.load(os.path.join(MODEL_DIR, 'isolation_forest.pkl'))
+scaler = joblib.load(os.path.join(MODEL_DIR, 'scaler.pkl'))
 print("Model Load Complete!")
 
 class DailyRecord(BaseModel):
