@@ -62,8 +62,9 @@ jobs:
       # 7. GCP 서비스 계정 키 전송
       - name: Copy GCP credentials
         run: |
+          echo '${{ secrets.GCP_CREDENTIALS }}' > /tmp/gcp-credentials.json
           scp -i ~/.ssh/deploy_key \
-            src/main/resources/gcp-credentials.json \
+            /tmp/gcp-credentials.json \
             ${{ secrets.GCP_USERNAME }}@${{ secrets.GCP_HOST }}:/home/jmo02_kim/gcp-credentials.json
 
       # 8. 서버 재시작
