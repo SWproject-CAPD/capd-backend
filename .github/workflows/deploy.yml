@@ -33,6 +33,7 @@ jobs:
           spring.jpa.hibernate.ddl-auto=update
           spring.jpa.show-sql=false
           spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+          spring.jwt.secret=${{ secrets.JWT_SECRET }}
           gemini.api.key=${{ secrets.GEMINI_API_KEY }}
           gemini.model=gemini-2.5-flash-lite
           gcp.storage.bucket-name=${{ secrets.GCP_BUCKET_NAME }}
@@ -113,6 +114,7 @@ jobs:
             docker run -d \
               --name capd-fastapi \
               --network host \
+              -v /home/jmo02_kim/chromadb:/app/chromadb \
               -e GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
               asia-northeast3-docker.pkg.dev/skuniv-training-1/capd-repo/capd-fastapi:latest
           ENDSSH
