@@ -50,7 +50,7 @@ public class PatientAuthController {
         return ResponseEntity.ok(BaseResponse.success(200, "로그인에 성공했습니다.", patientLoginResponse));
     }
 
-    @Operation(summary = "환자 로그아웃", description = "患者 로그아웃 api")
+    @Operation(summary = "환자 로그아웃", description = "환자 로그아웃 api")
     @DeleteMapping("/patients/tokens")
     public ResponseEntity<BaseResponse<PatientLoginResponse>> logout(
             @RequestHeader("Authorization") String token, HttpServletResponse response) {
@@ -66,5 +66,4 @@ public class PatientAuthController {
 
         return ResponseEntity.ok(BaseResponse.success(200, "로그아웃에 성공했습니다.", null));
     }
-
 }
