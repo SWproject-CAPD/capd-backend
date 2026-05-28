@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class PatientAuthMapper {
 
-    public PatientLoginResponse toResponse(UserEntity user, PatientEntity patient,String accessToken, Long expireTime) {
+    public PatientLoginResponse toResponse(UserEntity user, PatientEntity patient, String accessToken, Long expireTime) {
         return PatientLoginResponse.builder()
                 .accessToken(accessToken)
                 .userId(user.getUserId())

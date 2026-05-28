@@ -20,7 +20,6 @@ public class PatientLoginRequest {
     @Email(message = "이메일 형식에 맞게 입력해주세요.")
     private String email;
 
-
     @Schema(description = "사용자 비밀번호", example = "c*123456789")
     @NotBlank(message = "비밀번호는 필수 입력값입니다.")
     private String password;
