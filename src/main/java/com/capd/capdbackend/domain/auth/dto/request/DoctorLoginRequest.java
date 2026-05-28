@@ -18,7 +18,6 @@ public class DoctorLoginRequest {
     @NotBlank(message = "면허번호는 필수 입력값입니다.")
     private String licenseId;
 
-
     @Schema(description = "의사 비밀번호", example = "c*123456789")
     @NotBlank(message = "비밀번호는 필수 입력값입니다.")
     private String password;

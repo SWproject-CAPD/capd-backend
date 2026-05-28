@@ -2,6 +2,7 @@ package com.capd.capdbackend.domain.auth.controller;
 
 import com.capd.capdbackend.domain.auth.dto.request.PatientLoginRequest;
 import com.capd.capdbackend.domain.auth.dto.response.PatientLoginResponse;
+import com.capd.capdbackend.domain.auth.dto.response.RefreshTokenResponse;
 import com.capd.capdbackend.domain.auth.service.PatientAuthService;
 import com.capd.capdbackend.domain.patient.repository.PatientRepository;
 import com.capd.capdbackend.domain.user.exception.UserErrorCode;
@@ -50,7 +51,7 @@ public class PatientAuthController {
         return ResponseEntity.ok(BaseResponse.success(200, "로그인에 성공했습니다.", patientLoginResponse));
     }
 
-    @Operation(summary = "환자 로그아웃", description = "患者 로그아웃 api")
+    @Operation(summary = "환자 로그아웃", description = "환자 로그아웃 api")
     @DeleteMapping("/patients/tokens")
     public ResponseEntity<BaseResponse<PatientLoginResponse>> logout(
             @RequestHeader("Authorization") String token, HttpServletResponse response) {
@@ -67,4 +68,19 @@ public class PatientAuthController {
         return ResponseEntity.ok(BaseResponse.success(200, "로그아웃에 성공했습니다.", null));
     }
 
+    // 환자 토큰 재발급
+    @Operation(summary = "환자 Refresh Token 발급", description = "Refresh Token으로 새로운 토큰을 발급하는 API")
+    @PostMapping("/patients/tokens/refresh")
+    public ResponseEntity<BaseResponse<RefreshTokenResponse>> patientRefreshToken(
+            @CookieValue("refreshToken") String refreshToken, HttpServletResponse response) {
+
+        // service 로직 실행
+        RefreshTokenResponse refreshTokenResponse = patientAuthService.refreshToken(refreshToken);
+
+        // 새 Refresh Token Cookie로 반환
+        jwtProvider.addJwtToCookie(response, refreshTokenResponse.getRefreshToken(), "refreshToken", 60 * 60 * 24 * 7);
+
+        // 새 Access Token Body로 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "토큰 재발급 성공", refreshTokenResponse));
+    }
 }
