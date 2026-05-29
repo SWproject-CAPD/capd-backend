@@ -54,6 +54,9 @@ dependencies {
 
     // GCP Cloud Storage
     implementation 'com.google.cloud:google-cloud-storage:2.29.0'
+
+    // 이메일 발송
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
 }
 
 tasks.named('test') {

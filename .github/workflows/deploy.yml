@@ -42,6 +42,12 @@ jobs:
           gemini.model=gemini-2.5-flash-lite
           gcp.storage.bucket-name=${{ secrets.GCP_BUCKET_NAME }}
           gcp.storage.credentials-path=/home/jmo02_kim/gcp-credentials.json
+          spring.mail.host=smtp.gmail.com
+          spring.mail.port=587
+          spring.mail.username=${{ secrets.MAIL_USERNAME }}
+          spring.mail.password=${{ secrets.MAIL_PASSWORD }}
+          spring.mail.properties.mail.smtp.auth=true
+          spring.mail.properties.mail.smtp.starttls.enable=true
           EOF
 
       # 4. Gradle 빌드
