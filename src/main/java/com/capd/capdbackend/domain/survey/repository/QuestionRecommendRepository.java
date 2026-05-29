@@ -20,4 +20,10 @@ public interface QuestionRecommendRepository extends JpaRepository<QuestionRecom
 
     // 질문 ID로 조회
     Optional<QuestionRecommendEntity> findByQuestionId(Long questionId);
+
+    // 예약에 연관된 질문 목록 조회
+    List<QuestionRecommendEntity> findAllByReservation(ReservationEntity reservation);
+
+    // 예약에 연관된 질문 전체 삭제
+    void deleteAllByReservation(ReservationEntity reservation);
 }
