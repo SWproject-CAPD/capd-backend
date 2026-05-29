@@ -9,6 +9,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -68,11 +69,14 @@ public class JwtProvider {
 
     // 토큰 정보를 쿠키에 저장
     public void addJwtToCookie(HttpServletResponse response, String token, String name, long maxAge) {
-        Cookie cookie = new Cookie(name, token);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge((int) maxAge / 1000); // 단위: 초
-        response.addCookie(cookie);
+        ResponseCookie cookie = ResponseCookie.from(name, token)
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .path("/")
+                .maxAge(maxAge / 1000)
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
     }
 
     // 이것도 auth 파일 하면 주석 처리
