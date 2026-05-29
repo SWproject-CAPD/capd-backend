@@ -3,6 +3,7 @@ package com.capd.capdbackend.domain.auth.controller;
 import com.capd.capdbackend.domain.auth.dto.request.PatientLoginRequest;
 import com.capd.capdbackend.domain.auth.dto.response.PatientLoginResponse;
 import com.capd.capdbackend.domain.auth.dto.response.RefreshTokenResponse;
+import com.capd.capdbackend.domain.auth.exception.AuthErrorCode;
 import com.capd.capdbackend.domain.auth.service.PatientAuthService;
 import com.capd.capdbackend.domain.patient.repository.PatientRepository;
 import com.capd.capdbackend.domain.user.exception.UserErrorCode;
@@ -72,15 +73,19 @@ public class PatientAuthController {
     @Operation(summary = "환자 Refresh Token 발급", description = "Refresh Token으로 새로운 토큰을 발급하는 API")
     @PostMapping("/patients/tokens/refresh")
     public ResponseEntity<BaseResponse<RefreshTokenResponse>> patientRefreshToken(
-            @CookieValue("refreshToken") String refreshToken, HttpServletResponse response) {
+            @CookieValue(value = "refreshToken", required = false) String refreshToken,
+            HttpServletResponse response) {
 
-        // service 로직 실행
+        // Refresh Token이 없을때
+        if (refreshToken == null) {
+            throw new CustomException(AuthErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        // service 호출
         RefreshTokenResponse refreshTokenResponse = patientAuthService.refreshToken(refreshToken);
-
-        // 새 Refresh Token Cookie로 반환
         jwtProvider.addJwtToCookie(response, refreshTokenResponse.getRefreshToken(), "refreshToken", 60 * 60 * 24 * 7);
 
-        // 새 Access Token Body로 반환
+        // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "토큰 재발급 성공", refreshTokenResponse));
     }
 }
