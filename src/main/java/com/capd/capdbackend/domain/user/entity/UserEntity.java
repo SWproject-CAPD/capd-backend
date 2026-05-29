@@ -47,4 +47,9 @@ public class UserEntity extends BaseTimeEntity {
     public void expireRefreshToken() {
         this.refreshToken = null;
     }
+
+    // 비밀번호 변경
+    public void changePassword(String password) {
+        this.password = password;
+    }
 }
