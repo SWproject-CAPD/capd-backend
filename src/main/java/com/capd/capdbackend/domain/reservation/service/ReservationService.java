@@ -15,6 +15,9 @@ import com.capd.capdbackend.domain.reservation.mapper.ReservationCreateMapper;
 import com.capd.capdbackend.domain.reservation.mapper.ReservationDoctorReadMapper;
 import com.capd.capdbackend.domain.reservation.mapper.ReservationPatientReadMapper;
 import com.capd.capdbackend.domain.reservation.repository.ReservationRepository;
+import com.capd.capdbackend.domain.survey.entity.QuestionRecommendEntity;
+import com.capd.capdbackend.domain.survey.repository.AnswerResultRepository;
+import com.capd.capdbackend.domain.survey.repository.QuestionRecommendRepository;
 import com.capd.capdbackend.domain.user.exception.UserErrorCode;
 import com.capd.capdbackend.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +41,8 @@ public class ReservationService {
     private final ReservationCreateMapper reservationCreateMapper;
     private final ReservationPatientReadMapper reservationPatientReadMapper;
     private final ReservationDoctorReadMapper reservationDoctorReadMapper;
+    private final QuestionRecommendRepository questionRecommendRepository;
+    private final AnswerResultRepository answerResultRepository;
 
     // 의사가 진료 예약 생성
     @Transactional
@@ -125,7 +130,19 @@ public class ReservationService {
             throw new CustomException(ReservationErrorCode.RESERVATION_NO_PERMISSION);
         }
 
-        // DB에서 삭제
+        // 연관된 질문 조회
+        List<QuestionRecommendEntity> questions = questionRecommendRepository.findAllByReservation(reservation);
+
+        // 연관된 답변 먼저 삭제
+        answerResultRepository.deleteAllByQuestionIn(questions);
+
+        // 연관된 설문 질문 삭제
+        questionRecommendRepository.deleteAllByReservation(reservation);
+
+        // 예약 삭제
         reservationRepository.delete(reservation);
+
+        // 로그 출력
+        log.info("예약 삭제 완료: reservationId={}", reservationId);
     }
 }

@@ -18,4 +18,7 @@ public interface AnswerResultRepository extends JpaRepository<AnswerResultEntity
 
     // 환자가 이미 답변했는지 확인
     boolean existsByQuestionAndPatient(QuestionRecommendEntity question, PatientEntity patient);
+
+    // 질문 목록에 연관된 답변 전체 삭제
+    void deleteAllByQuestionIn(List<QuestionRecommendEntity> questions);
 }
