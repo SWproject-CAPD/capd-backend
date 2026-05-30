@@ -19,12 +19,18 @@ public class SwaggerConfig {
 
     @Bean
     public OpenAPI customOpenAPI() {
-        // 서버 설정
+
+        // 로컬 서버 설정
         Server localServer = new Server();
         localServer.url(contextPath);
         localServer.setDescription("Local Server");
 
-        // JWT 보안 스키마 설정 (자물쇠 버튼)
+        // 배포 서버 설정
+        Server prodServer = new Server();
+        prodServer.url("https://kimjeongmo.shop");
+        prodServer.setDescription("Production Server");
+
+        // JWT 보안 스키마 설정
         String jwt = "JWT";
         SecurityScheme securityScheme = new SecurityScheme()
                 .name(jwt)
@@ -32,10 +38,10 @@ public class SwaggerConfig {
                 .scheme("bearer")
                 .bearerFormat("JWT");
 
-        // 모든 API에 자물쇠 적용
         SecurityRequirement securityRequirement = new SecurityRequirement().addList(jwt);
 
         return new OpenAPI()
+                .addServersItem(prodServer)
                 .addServersItem(localServer)
                 .components(new Components().addSecuritySchemes(jwt, securityScheme))
                 .addSecurityItem(securityRequirement)
