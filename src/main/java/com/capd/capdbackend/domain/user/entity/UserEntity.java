@@ -27,6 +27,7 @@ public class UserEntity extends BaseTimeEntity {
     private String email;
 
     @Column(nullable = false, length = 200)
+    @JsonIgnore
     private String password;
 
     @Column(nullable = false, length = 100, unique = true)
