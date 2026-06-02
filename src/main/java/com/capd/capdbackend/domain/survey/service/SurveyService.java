@@ -38,6 +38,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -269,15 +270,27 @@ public class SurveyService {
             throw new CustomException(ReservationErrorCode.RESERVATION_NO_PERMISSION);
         }
 
-        // 예약 당일까지만 조회 가능
         LocalDate reservationDate = reservation.getReservationDate().toLocalDate();
-        if (LocalDate.now().isAfter(reservationDate)) {
-            throw new CustomException(SurveyErrorCode.ANSWER_DEADLINE_PASSED);
-        }
+        boolean isExpired = LocalDate.now().isAfter(reservationDate);
 
-        // entity -> dto
-        return questionRecommendRepository.findAllByReservationAndStatusOrderByCreatedAtDesc(reservation, QuestionStatus.APPROVED).stream()
-                .map(questionMapper::toPatientQuestionResponse)
+        List<QuestionRecommendEntity> questions = questionRecommendRepository
+                .findAllByReservationAndStatusOrderByCreatedAtDesc(reservation, QuestionStatus.APPROVED);
+
+        return questions.stream()
+                .map(q -> {
+                    // 답변 조회
+                    Optional<AnswerResultEntity> answerOpt = answerResultRepository.findByQuestionAndPatient(q, patient);
+                    boolean answered = answerOpt.isPresent();
+                    String answer = answerOpt.map(AnswerResultEntity::getAnswer).orElse(null);
+
+                    // 기한 지났고 답변 안 했으면 제외
+                    if (isExpired && !answered) {
+                        return null;
+                    }
+
+                    return questionMapper.toPatientQuestionResponse(q, answered, answer);
+                })
+                .filter(q -> q != null)
                 .toList();
     }
 
