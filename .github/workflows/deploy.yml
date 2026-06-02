@@ -48,6 +48,8 @@ jobs:
           spring.mail.password=${{ secrets.MAIL_PASSWORD }}
           spring.mail.properties.mail.smtp.auth=true
           spring.mail.properties.mail.smtp.starttls.enable=true
+          spring.data.redis.host=localhost
+          spring.data.redis.port=6379
           EOF
 
       # 4. Gradle 빌드
