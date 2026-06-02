@@ -36,7 +36,7 @@ jobs:
           spring.jwt.secret=${{ secrets.JWT_SECRET }}
           spring.jwt.expiration=300000
           spring.jwt.refresh-token-expiration=1209600000
-          cors.allowed-origins=http://localhost:3000,https://capd.site,https://www.capd.site
+          cors.allowed-origins=http://localhost:3000,https://capd.site,https://www.capd.site,https://api.capd.site
           ml.api.base-url=http://localhost:8000
           gemini.api.key=${{ secrets.GEMINI_API_KEY }}
           gemini.model=gemini-2.5-flash-lite
