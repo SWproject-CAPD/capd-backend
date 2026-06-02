@@ -1,6 +1,7 @@
 package com.capd.capdbackend.domain.survey.controller;
 
 import com.capd.capdbackend.domain.survey.dto.request.AnswerListRequest;
+import com.capd.capdbackend.domain.survey.dto.request.PassiveQuestionRequest;
 import com.capd.capdbackend.domain.survey.dto.response.AnswerResponse;
 import com.capd.capdbackend.domain.survey.dto.response.PatientQuestionResponse;
 import com.capd.capdbackend.domain.survey.dto.response.QuestionResponse;
@@ -178,5 +179,20 @@ public class SurveyController {
 
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "답변 조회 성공", response));
+    }
+
+    // 의사가 수동으로 질문 생성
+    @Operation(summary = "수동 질문 생성", description = "의사가 직접 질문을 생성하는 API")
+    @PostMapping("/surveys/{reservationId}/questions/manual")
+    public ResponseEntity<BaseResponse<QuestionResponse>> createManualQuestion(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long reservationId,
+            @RequestBody @Valid PassiveQuestionRequest request) {
+
+        // service 호출
+        QuestionResponse response = surveyService.createPassiveQuestion(userDetails.getIdentifier(), reservationId, request);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "수동 질문 생성 성공", response));
     }
 }
