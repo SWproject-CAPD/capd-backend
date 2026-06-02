@@ -37,7 +37,7 @@ public class QuestionRecommendEntity extends BaseTimeEntity {
     @Column(nullable = false, length = 1000)
     private String question; // 질문 내용
 
-    @Column(nullable = false, length = 1000)
+    @Column(length = 1000)
     private String questionReason; // AI 추천 근거
 
     @Enumerated(EnumType.STRING)
