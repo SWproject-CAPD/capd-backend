@@ -14,6 +14,7 @@ import com.capd.capdbackend.domain.reservation.exception.ReservationErrorCode;
 import com.capd.capdbackend.domain.reservation.repository.ReservationRepository;
 import com.capd.capdbackend.domain.survey.dto.request.AnswerListRequest;
 import com.capd.capdbackend.domain.survey.dto.request.AnswerRequest;
+import com.capd.capdbackend.domain.survey.dto.request.PassiveQuestionRequest;
 import com.capd.capdbackend.domain.survey.dto.response.AnswerResponse;
 import com.capd.capdbackend.domain.survey.dto.response.PatientQuestionResponse;
 import com.capd.capdbackend.domain.survey.dto.response.QuestionResponse;
@@ -527,5 +528,46 @@ public class SurveyService {
         }
 
         return answerMapper.toResponse(answer);
+    }
+
+    // 의사가 수동으로 질문 생성
+    @Transactional
+    public QuestionResponse createPassiveQuestion(String licenseId, Long reservationId, PassiveQuestionRequest request) {
+
+        // 의사 유저 조회
+        DoctorEntity doctor = doctorRepository.findByLicenseId(licenseId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 예약이 존재하는지 조회
+        ReservationEntity reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new CustomException(ReservationErrorCode.RESERVATION_NOT_FOUND));
+
+        // 담당 환자 예약인지 확인
+        if (!reservation.getDoctor().getDoctorId().equals(doctor.getDoctorId())) {
+            throw new CustomException(DoctorErrorCode.DOCTOR_NO_PERMISSION);
+        }
+
+        PatientEntity patient = reservation.getPatient();
+
+        // 질문 저장
+        QuestionRecommendEntity question = QuestionRecommendEntity.builder()
+                .doctor(doctor)
+                .patient(patient)
+                .reservation(reservation)
+                .question(request.getQuestion())
+                .type(request.getType())
+                .options(request.getOptions())
+                .questionReason("의사가 직접 생성한 질문")
+                .status(QuestionStatus.APPROVED)
+                .build();
+
+        // DB 저장
+        questionRecommendRepository.save(question);
+
+        // 로그 출력
+        log.info("수동 질문 생성 완료: reservationId={}, type={}", reservationId, request.getType());
+
+        // entity -> dto
+        return questionMapper.toQuestionResponse(question);
     }
 }
