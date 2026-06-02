@@ -27,4 +27,19 @@ public class EmailSendService {
         mailSender.send(message);
         log.info("임시 비밀번호 이메일 발송 완료: {}", toEmail);
     }
+
+    // 이메일 인증 코드 발송
+    public void sendVerificationCode(String toEmail, String code) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(toEmail);
+        message.setSubject("[CAPD] 이메일 인증 코드");
+        message.setText(
+                "안녕하세요. CAPD 복막투석 관리 시스템입니다.\n\n" +
+                        "이메일 인증 코드: " + code + "\n\n" +
+                        "인증 코드는 5분간 유효합니다. 5분안에 인증을 완료해주세요."
+        );
+
+        mailSender.send(message);
+        log.info("이메일 인증 코드 발송 완료: {}", toEmail);
+    }
 }
