@@ -26,13 +26,15 @@ public class QuestionMapper {
     }
 
     // entity -> 환자용 response
-    public PatientQuestionResponse toPatientQuestionResponse(QuestionRecommendEntity entity) {
+    public PatientQuestionResponse toPatientQuestionResponse(QuestionRecommendEntity entity, boolean answered, String answer) {
         return PatientQuestionResponse.builder()
                 .questionId(entity.getQuestionId())
                 .reservationDate(entity.getReservation().getReservationDate())
                 .question(entity.getQuestion())
                 .type(entity.getType().name())
                 .options(entity.getOptions())
+                .answered(answered)
+                .answer(answer)
                 .build();
     }
 }
