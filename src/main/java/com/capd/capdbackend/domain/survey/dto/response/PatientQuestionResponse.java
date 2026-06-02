@@ -27,4 +27,10 @@ public class PatientQuestionResponse {
 
     @Schema(description = "객관식 보기", example = "[\"국물류\", \"튀김류\", \"육류\"]")
     private String options;
+
+    @Schema(description = "답변 여부", example = "false")
+    private boolean answered;
+
+    @Schema(description = "답변 내용", example = "국물류")
+    private String answer;
 }
