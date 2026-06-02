@@ -111,7 +111,7 @@ public class SurveyController {
     }
 
     // 의사가 특정 예약의 답변 목록 조회
-    @Operation(summary = "답변 목록 조회", description = "의사가 특정 예약의 환자 답변 목록을 조회하는 API")
+    @Operation(summary = "의사 답변 목록 조회", description = "의사가 특정 예약의 환자 답변 목록을 조회하는 API")
     @GetMapping("/surveys/{reservationId}/answers")
     public ResponseEntity<BaseResponse<List<AnswerResponse>>> getDoctorAnswers(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -150,5 +150,33 @@ public class SurveyController {
 
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "AI 설명 생성 성공", response));
+    }
+
+    // 환자가 본인의 답변 목록 조회
+    @Operation(summary = "환자 답변 목록 조회", description = "환자가 제출한 답변 목록을 조회하는 API")
+    @GetMapping("/surveys/{reservationId}/patient/answers")
+    public ResponseEntity<BaseResponse<List<AnswerResponse>>> getPatientAnswers(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long reservationId) {
+
+        // service 호출
+        List<AnswerResponse> response = surveyService.getPatientAnswers(userDetails.getIdentifier(), reservationId);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "답변 목록 조회 성공", response));
+    }
+
+    // 환자가 본인이 작성한 답변 조회
+    @Operation(summary = "환자 단건 답변 조회", description = "환자가 특정 답변을 조회하는 API")
+    @GetMapping("/surveys/answers/{answerId}/patient")
+    public ResponseEntity<BaseResponse<AnswerResponse>> getPatientAnswer(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long answerId) {
+
+        // service 호출
+        AnswerResponse response = surveyService.getPatientAnswer(userDetails.getIdentifier(), answerId);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "답변 조회 성공", response));
     }
 }
