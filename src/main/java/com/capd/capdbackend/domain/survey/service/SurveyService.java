@@ -269,9 +269,9 @@ public class SurveyService {
             throw new CustomException(ReservationErrorCode.RESERVATION_NO_PERMISSION);
         }
 
-        // 예약 전날까지만 조회 가능
-        LocalDate deadline = reservation.getReservationDate().toLocalDate().minusDays(1);
-        if (LocalDate.now().isAfter(deadline)) {
+        // 예약 당일까지만 조회 가능
+        LocalDate reservationDate = reservation.getReservationDate().toLocalDate();
+        if (LocalDate.now().isAfter(reservationDate)) {
             throw new CustomException(SurveyErrorCode.ANSWER_DEADLINE_PASSED);
         }
 
@@ -298,13 +298,11 @@ public class SurveyService {
             throw new CustomException(ReservationErrorCode.RESERVATION_NO_PERMISSION);
         }
 
-        // 예약 전날까지만 답변 가능
-        LocalDate deadline = reservation.getReservationDate()
-                .toLocalDate().minusDays(1);
-        if (LocalDate.now().isAfter(deadline)) {
+        // 예약 당일까지만 답변 가능
+        LocalDate reservationDate = reservation.getReservationDate().toLocalDate();
+        if (LocalDate.now().isAfter(reservationDate)) {
             throw new CustomException(SurveyErrorCode.ANSWER_DEADLINE_PASSED);
         }
-
 
         // 각 답변 저장
         List<AnswerResponse> resultList = new ArrayList<>();
@@ -469,5 +467,52 @@ public class SurveyService {
         log.info("AI 설명 생성 완료: questionId={}", questionId);
 
         return aiExplain;
+    }
+
+    // 환자가 본인이 작성한 답변 목록 조회
+    public List<AnswerResponse> getPatientAnswers(String email, Long reservationId) {
+
+        // 환자 조회
+        PatientEntity patient = patientRepository.findByUserEmail(email)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 예약 조회
+        ReservationEntity reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new CustomException(ReservationErrorCode.RESERVATION_NOT_FOUND));
+
+        // 본인 예약인지 확인
+        if (!reservation.getPatient().getPatientId().equals(patient.getPatientId())) {
+            throw new CustomException(ReservationErrorCode.RESERVATION_NO_PERMISSION);
+        }
+
+        // 해당 예약의 질문들에 달린 본인 답변 조회
+        List<QuestionRecommendEntity> questions = questionRecommendRepository
+                .findAllByReservationAndStatusOrderByCreatedAtDesc(reservation, QuestionStatus.APPROVED);
+
+        return questions.stream()
+                .flatMap(q -> answerResultRepository
+                        .findByQuestionAndPatient(q, patient)
+                        .stream())
+                .map(answerMapper::toResponse)
+                .toList();
+    }
+
+    // 환자가 제출한 답변을 조회
+    public AnswerResponse getPatientAnswer(String email, Long answerId) {
+
+        // 환자 조회
+        PatientEntity patient = patientRepository.findByUserEmail(email)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 답변 조회
+        AnswerResultEntity answer = answerResultRepository.findById(answerId)
+                .orElseThrow(() -> new CustomException(SurveyErrorCode.ANSWER_NOT_FOUND));
+
+        // 본인 답변인지 확인
+        if (!answer.getPatient().getPatientId().equals(patient.getPatientId())) {
+            throw new CustomException(SurveyErrorCode.ANSWER_NO_PERMISSION);
+        }
+
+        return answerMapper.toResponse(answer);
     }
 }
