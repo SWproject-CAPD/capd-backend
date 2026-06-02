@@ -27,7 +27,7 @@ public class SwaggerConfig {
 
         // 배포 서버 설정
         Server prodServer = new Server();
-        prodServer.url("https://kimjeongmo.shop");
+        prodServer.url("https://api.capd.site");
         prodServer.setDescription("Production Server");
 
         // JWT 보안 스키마 설정
