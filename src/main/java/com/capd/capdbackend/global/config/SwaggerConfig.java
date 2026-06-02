@@ -22,7 +22,7 @@ public class SwaggerConfig {
 
         // 로컬 서버 설정
         Server localServer = new Server();
-        localServer.url(contextPath);
+        localServer.url("http://localhost:8080");
         localServer.setDescription("Local Server");
 
         // 배포 서버 설정

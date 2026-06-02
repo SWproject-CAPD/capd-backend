@@ -43,6 +43,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/doctors").permitAll()
                         .requestMatchers("/api/patients").permitAll()
                         .requestMatchers("/api/users/password/reset").permitAll()
+                        .requestMatchers("/api/users/email/verification").permitAll()
+                        .requestMatchers("/api/users/email/verify").permitAll()
                         .anyRequest().authenticated()
                 )
 
