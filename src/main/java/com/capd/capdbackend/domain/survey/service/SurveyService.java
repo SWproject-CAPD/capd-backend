@@ -557,7 +557,6 @@ public class SurveyService {
                 .question(request.getQuestion())
                 .type(request.getType())
                 .options(request.getOptions())
-                .questionReason("의사가 직접 생성한 질문")
                 .status(QuestionStatus.APPROVED)
                 .build();
 
