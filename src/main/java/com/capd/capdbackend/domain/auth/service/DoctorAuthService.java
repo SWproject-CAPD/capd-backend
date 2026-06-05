@@ -66,7 +66,7 @@ public class DoctorAuthService {
         log.info("의사 로그인 성공: 면허번호 {}, 이메일 {}", request.getLicenseId(), user.getEmail());
 
         // 응답 반환 (Access Token은 Body로)
-        return doctorAuthMapper.toResponse(user, doctor, accessToken, expirationTime);
+        return doctorAuthMapper.toResponse(user, doctor, accessToken, refreshToken, expirationTime);
     }
 
     // 로그아웃
