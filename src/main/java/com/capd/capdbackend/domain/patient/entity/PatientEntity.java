@@ -11,6 +11,7 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -40,7 +41,7 @@ public class PatientEntity extends BaseTimeEntity {
     private Sex sex; // 성별
 
     @Column(nullable = false)
-    private int age; // 환자 나이
+    private LocalDate birthDate; // 환자 나이
 
     private Float heightCm; // 환자 키
 
