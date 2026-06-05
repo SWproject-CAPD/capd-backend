@@ -26,7 +26,7 @@ jobs:
           mkdir -p src/main/resources
           cat > src/main/resources/application.properties << EOF
           spring.application.name=capd-backend
-          spring.datasource.url=jdbc:mysql://localhost:3306/capd_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+          spring.datasource.url=jdbc:mysql://mysql:3306/capd_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
           spring.datasource.username=root
           spring.datasource.password=${{ secrets.DB_PASSWORD }}
           spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
@@ -37,7 +37,7 @@ jobs:
           spring.jwt.expiration=300000
           spring.jwt.refresh-token-expiration=1209600000
           cors.allowed-origins=http://localhost:3000,https://capd.site,https://www.capd.site,https://api.capd.site
-          ml.api.base-url=http://localhost:8000
+          ml.api.base-url=http://capd-fastapi:8000
           gemini.api.key=${{ secrets.GEMINI_API_KEY }}
           gemini.model=gemini-2.5-flash-lite
           gcp.storage.bucket-name=${{ secrets.GCP_BUCKET_NAME }}
@@ -48,7 +48,7 @@ jobs:
           spring.mail.password=${{ secrets.MAIL_PASSWORD }}
           spring.mail.properties.mail.smtp.auth=true
           spring.mail.properties.mail.smtp.starttls.enable=true
-          spring.data.redis.host=localhost
+          spring.data.redis.host=redis
           spring.data.redis.port=6379
           EOF
 
@@ -103,28 +103,61 @@ jobs:
             # GCP Artifact Registry 인증
             gcloud auth configure-docker asia-northeast3-docker.pkg.dev --quiet
 
+            # Docker network 생성
+            docker network create capd-network || true
+
             # 기존 컨테이너 중지 및 제거
             docker stop capd-backend || true
             docker rm capd-backend || true
             docker stop capd-fastapi || true
             docker rm capd-fastapi || true
+            docker stop mysql || true
+            docker rm mysql || true
+            docker stop redis || true
+            docker rm redis || true
+            docker stop chromadb || true
+            docker rm chromadb || true
 
             # 최신 이미지 pull
             docker pull asia-northeast3-docker.pkg.dev/skuniv-training-1/capd-repo/capd-backend:latest
             docker pull asia-northeast3-docker.pkg.dev/skuniv-training-1/capd-repo/capd-fastapi:latest
 
+            # MySQL 컨테이너 실행
+            docker run -d \
+              --name mysql \
+              --network capd-network \
+              -e MYSQL_ROOT_PASSWORD=${{ secrets.DB_PASSWORD }} \
+              -e MYSQL_DATABASE=capd_db \
+              -v /home/jmo02_kim/mysql-data:/var/lib/mysql \
+              mysql:8.0
+
+            # Redis 컨테이너 실행
+            docker run -d \
+              --name redis \
+              --network capd-network \
+              -v /home/jmo02_kim/redis-data:/data \
+              redis:7.0
+
+            # ChromaDB 컨테이너 실행
+            docker run -d \
+              --name chromadb \
+              --network capd-network \
+              -v /home/jmo02_kim/chromadb:/chroma/chroma \
+              chromadb/chroma:latest
+
             # Spring Boot 컨테이너 실행
             docker run -d \
               --name capd-backend \
-              --network host \
+              --network capd-network \
+              -p 8080:8080 \
               -v /home/jmo02_kim/gcp-credentials.json:/home/jmo02_kim/gcp-credentials.json \
               asia-northeast3-docker.pkg.dev/skuniv-training-1/capd-repo/capd-backend:latest
 
             # FastAPI 컨테이너 실행
             docker run -d \
               --name capd-fastapi \
-              --network host \
-              -v /home/jmo02_kim/chromadb:/app/chromadb \
+              --network capd-network \
+              -p 8000:8000 \
               -v /home/jmo02_kim/models:/app/models \
               -e GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
               asia-northeast3-docker.pkg.dev/skuniv-training-1/capd-repo/capd-fastapi:latest
