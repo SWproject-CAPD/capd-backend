@@ -1,5 +1,6 @@
 package com.capd.capdbackend.domain.auth.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,4 +24,8 @@ public class DoctorLoginResponse {
 
     @Schema(description = "사용자 토큰 만료시간", example = "1000000")
     private Long expiresAt;
+
+    @Schema(description = "Refresh Token")
+    @JsonIgnore
+    private String refreshToken;
 }

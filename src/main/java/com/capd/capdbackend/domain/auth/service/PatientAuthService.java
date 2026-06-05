@@ -71,7 +71,7 @@ public class PatientAuthService {
         log.info("환자 로그인 성공: 이메일 {}", user.getEmail());
 
         // 응답 반환
-        return patientAuthMapper.toResponse(user, patient, accessToken, expirationTime);
+        return patientAuthMapper.toResponse(user, patient, accessToken, refreshToken, expirationTime);
     }
 
     // 로그아웃

@@ -5,9 +5,6 @@ import com.capd.capdbackend.domain.auth.dto.response.PatientLoginResponse;
 import com.capd.capdbackend.domain.auth.dto.response.RefreshTokenResponse;
 import com.capd.capdbackend.domain.auth.exception.AuthErrorCode;
 import com.capd.capdbackend.domain.auth.service.PatientAuthService;
-import com.capd.capdbackend.domain.patient.repository.PatientRepository;
-import com.capd.capdbackend.domain.user.exception.UserErrorCode;
-import com.capd.capdbackend.domain.user.repository.UserRepository;
 import com.capd.capdbackend.global.exception.CustomException;
 import com.capd.capdbackend.global.jwt.JwtProvider;
 import com.capd.capdbackend.global.response.BaseResponse;
@@ -27,8 +24,6 @@ import org.springframework.web.bind.annotation.*;
 public class PatientAuthController {
 
     private final PatientAuthService patientAuthService;
-    private final PatientRepository patientRepository;
-    private final UserRepository userRepository;
     private final JwtProvider jwtProvider;
 
     @Operation(summary = "환자 로그인", description = "환자가 이메일과 비밀번호로 로그인 하는 API")
@@ -39,14 +34,8 @@ public class PatientAuthController {
         // service 로직 실행
         PatientLoginResponse patientLoginResponse = patientAuthService.patientLogin(request);
 
-        // refreshToken 가져오기
-        String refreshToken = userRepository
-                .findByEmail(request.getEmail())
-                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND))
-                .getRefreshToken();
-
-        // Set-Cookie 설정
-        jwtProvider.addJwtToCookie(response, refreshToken, "refreshToken", 60 * 60 * 24 * 7);
+        // Refresh Token Cookie 방식으로 설정
+        jwtProvider.addJwtToCookie(response, patientLoginResponse.getRefreshToken(), "refreshToken", 60 * 60 * 24 * 7);
 
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "로그인에 성공했습니다.", patientLoginResponse));
