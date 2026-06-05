@@ -15,9 +15,8 @@ app = FastAPI(title="CAPD AI Doctor API")
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
-# ChromaDB 클라이언트 로드
-CHROMA_DIR = os.path.join(os.path.dirname(__file__), '..', 'chromadb')
-chroma_client = chromadb.PersistentClient(path=CHROMA_DIR)
+# ChromaDB HTTP 클라이언트 연결
+chroma_client = chromadb.HttpClient(host="chromadb", port=8000)
 collection = chroma_client.get_collection(name="kdigo_guidelines")
 print("ChromaDB 로드 완료!")
 
