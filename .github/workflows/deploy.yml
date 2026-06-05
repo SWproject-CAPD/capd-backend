@@ -142,7 +142,7 @@ jobs:
             docker run -d \
               --name chromadb \
               --network capd-network \
-              -v /home/jmo02_kim/chromadb:/chroma/chroma \
+              -v /home/jmo02_kim/chromadb:/data \
               chromadb/chroma:latest
 
             # Spring Boot 컨테이너 실행
