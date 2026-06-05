@@ -10,6 +10,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
+
 @Getter
 @NoArgsConstructor
 @Schema(title = "환자 회원가입 요청 dto", description = "환자가 회원가입할때 서버에 요청 보내는 데이터")
@@ -39,7 +41,7 @@ public class PatientSignUpRequest {
     @NotNull(message = "성별은 필수 입력값입니다.")
     private Sex sex;
 
-    @Schema(description = "나이", example = "26")
-    @NotNull(message = "나이는 필수 입력값입니다.")
-    private int age;
+    @Schema(description = "생년월일", example = "2002-10-28")
+    @NotNull(message = "생년월일은 필수 입력값입니다.")
+    private LocalDate birthDate;
 }

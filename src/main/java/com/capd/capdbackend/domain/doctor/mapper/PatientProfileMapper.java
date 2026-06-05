@@ -5,6 +5,9 @@ import com.capd.capdbackend.domain.patient.entity.PatientEntity;
 import com.capd.capdbackend.domain.user.entity.UserEntity;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+import java.time.Period;
+
 @Component
 public class PatientProfileMapper {
 
@@ -17,7 +20,7 @@ public class PatientProfileMapper {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .sex(patient.getSex())
-                .age(patient.getAge())
+                .age(Period.between(patient.getBirthDate(), LocalDate.now()).getYears())
                 .build();
     }
 }
