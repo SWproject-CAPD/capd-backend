@@ -124,6 +124,7 @@ jobs:
 
             # MySQL 컨테이너 실행
             docker run -d \
+              --restart always \
               --name mysql \
               --network capd-network \
               -e MYSQL_ROOT_PASSWORD=${{ secrets.DB_PASSWORD }} \
@@ -133,6 +134,7 @@ jobs:
 
             # Redis 컨테이너 실행
             docker run -d \
+              --restart always \
               --name redis \
               --network capd-network \
               -v /home/jmo02_kim/redis-data:/data \
@@ -140,6 +142,7 @@ jobs:
 
             # ChromaDB 컨테이너 실행
             docker run -d \
+              --restart always \
               --name chromadb \
               --network capd-network \
               -v /home/jmo02_kim/chromadb:/data \
@@ -147,6 +150,7 @@ jobs:
 
             # Spring Boot 컨테이너 실행
             docker run -d \
+              --restart always \
               --name capd-backend \
               --network capd-network \
               -p 8080:8080 \
@@ -155,6 +159,7 @@ jobs:
 
             # FastAPI 컨테이너 실행
             docker run -d \
+              --restart always \
               --name capd-fastapi \
               --network capd-network \
               -p 8000:8000 \
