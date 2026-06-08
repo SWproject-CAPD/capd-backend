@@ -130,7 +130,9 @@ jobs:
               -e MYSQL_ROOT_PASSWORD=${{ secrets.DB_PASSWORD }} \
               -e MYSQL_DATABASE=capd_db \
               -v /home/jmo02_kim/mysql-data:/var/lib/mysql \
-              mysql:8.0
+              mysql:8.0 \
+              --character-set-server=utf8mb4 \
+              --collation-server=utf8mb4_unicode_ci
 
             # Redis 컨테이너 실행
             docker run -d \
