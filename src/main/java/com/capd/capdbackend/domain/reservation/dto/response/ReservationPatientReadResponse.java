@@ -1,5 +1,6 @@
 package com.capd.capdbackend.domain.reservation.dto.response;
 
+import com.capd.capdbackend.domain.reservation.entity.ReservationType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -22,4 +23,6 @@ public class ReservationPatientReadResponse {
     @Schema(description = "예약 날짜 및 시간", example = "2026-05-06T14:00:00")
     private LocalDateTime reservationDate;
 
+    @Schema(description = "예약 유형", example = "REGULAR_CHECKUP")
+    private ReservationType type;
 }

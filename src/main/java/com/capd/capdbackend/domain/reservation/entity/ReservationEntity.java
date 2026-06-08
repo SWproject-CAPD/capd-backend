@@ -33,4 +33,8 @@ public class ReservationEntity extends BaseTimeEntity {
 
     @Column(nullable = false)
     private LocalDateTime reservationDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private ReservationType type; // 예약 유형
 }

@@ -1,5 +1,6 @@
 package com.capd.capdbackend.domain.reservation.dto.request;
 
+import com.capd.capdbackend.domain.reservation.entity.ReservationType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -25,4 +26,8 @@ public class ReservationCreateRequest {
     @Schema(description = "예약 날짜 및 시간", example = "2026-05-06T09:00:00")
     @NotNull(message = "예약 날짜는 필수입니다.")
     private LocalDateTime reservationDate;
+
+    @Schema(description = "예약 유형", example = "REGULAR_CHECKUP")
+    @NotNull(message = "예약 유형은 필수입니다.")
+    private ReservationType type;
 }
