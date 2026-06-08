@@ -16,6 +16,7 @@ public class ReservationCreateMapper {
                 .doctor(doctor)
                 .patient(patient)
                 .reservationDate(request.getReservationDate())
+                .type(request.getType())
                 .build();
     }
 
@@ -29,6 +30,7 @@ public class ReservationCreateMapper {
                 .doctorId(reservation.getDoctor().getDoctorId())
                 .doctorName(reservation.getDoctor().getUser().getUserName())
                 .reservationDate(reservation.getReservationDate())
+                .type(reservation.getType())
                 .build();
     }
 }
