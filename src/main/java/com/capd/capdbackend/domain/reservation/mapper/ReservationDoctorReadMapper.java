@@ -14,6 +14,7 @@ public class ReservationDoctorReadMapper {
                 .patientName(reservation.getPatient().getUser().getUserName())
                 .phone(reservation.getPatient().getUser().getPhone())
                 .reservationDate(reservation.getReservationDate())
+                .type(reservation.getType())
                 .build();
     }
 }
