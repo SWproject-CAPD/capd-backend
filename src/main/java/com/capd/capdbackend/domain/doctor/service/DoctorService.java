@@ -1,5 +1,6 @@
 package com.capd.capdbackend.domain.doctor.service;
 
+import com.capd.capdbackend.domain.chat.repository.ChatLogRepository;
 import com.capd.capdbackend.domain.doctor.dto.request.DoctorSignUpRequest;
 import com.capd.capdbackend.domain.doctor.dto.request.PatientRegisterRequest;
 import com.capd.capdbackend.domain.doctor.dto.response.*;
@@ -8,8 +9,13 @@ import com.capd.capdbackend.domain.doctor.exception.DoctorErrorCode;
 import com.capd.capdbackend.domain.doctor.mapper.*;
 import com.capd.capdbackend.domain.doctor.repository.DoctorRepository;
 import com.capd.capdbackend.domain.patient.entity.PatientEntity;
-import com.capd.capdbackend.domain.patient.exception.PatientErrorCode;
 import com.capd.capdbackend.domain.patient.repository.PatientRepository;
+import com.capd.capdbackend.domain.report.repository.ReportRepository;
+import com.capd.capdbackend.domain.reservation.entity.ReservationEntity;
+import com.capd.capdbackend.domain.reservation.repository.ReservationRepository;
+import com.capd.capdbackend.domain.survey.entity.QuestionRecommendEntity;
+import com.capd.capdbackend.domain.survey.repository.AnswerResultRepository;
+import com.capd.capdbackend.domain.survey.repository.QuestionRecommendRepository;
 import com.capd.capdbackend.domain.user.entity.UserEntity;
 import com.capd.capdbackend.domain.user.exception.UserErrorCode;
 import com.capd.capdbackend.domain.user.repository.UserRepository;
@@ -20,7 +26,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.print.Doc;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,6 +44,11 @@ public class DoctorService {
     private final PatientRegisterMapper patientRegisterMapper;
     private final PatientAllSearchMapper patientAllSearchMapper;
     private final PatientProfileMapper patientProfileMapper;
+    private final ReservationRepository reservationRepository;
+    private final QuestionRecommendRepository questionRecommendRepository;
+    private final AnswerResultRepository answerResultRepository;
+    private final ChatLogRepository chatLogRepository;
+    private final ReportRepository reportRepository;
 
     // 의사 회원가입
     @Transactional
@@ -102,6 +112,27 @@ public class DoctorService {
 
         // UserEntity 꺼내두기 => doctor에서 삭제되면 user에서도 삭제
         UserEntity user = doctor.getUser();
+
+        // 의사 채팅 기록 삭제
+        chatLogRepository.deleteAllByDoctor(doctor);
+
+        // 보고서 삭제
+        reportRepository.deleteAllByDoctor(doctor);
+
+        // 연관된 예약 삭제
+        List<ReservationEntity> reservations = reservationRepository.findAllByDoctor(doctor);
+        for (ReservationEntity reservation : reservations) {
+            List<QuestionRecommendEntity> questions = questionRecommendRepository.findAllByReservation(reservation);
+            answerResultRepository.deleteAllByQuestionIn(questions);
+            questionRecommendRepository.deleteAllByReservation(reservation);
+        }
+        reservationRepository.deleteAllByDoctor(doctor);
+
+        // 담당 환자 doctor_id null로 변경
+        List<PatientEntity> patients = patientRepository.findByDoctor(doctor);
+        for (PatientEntity patient : patients) {
+            patient.assignDoctor(null);
+        }
 
         // 의사 사용자 삭제
         doctorRepository.delete(doctor);

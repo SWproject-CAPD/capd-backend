@@ -2,6 +2,7 @@ package com.capd.capdbackend.domain.capd.repository;
 
 import com.capd.capdbackend.domain.capd.entity.CapdCommonEntity;
 import com.capd.capdbackend.domain.capd.entity.CapdSessionEntity;
+import com.capd.capdbackend.domain.patient.entity.PatientEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -19,4 +20,7 @@ public interface CapdSessionRepository extends JpaRepository<CapdSessionEntity, 
 
     // 세션 투석일지 id로 조회
     Optional<CapdSessionEntity> findByCapdSessionId(Long capdSessionId);
+
+    // 환자 삭제시 공통 투석일지 삭제
+    void deleteAllByCapdCommon(CapdCommonEntity capdCommon);
 }

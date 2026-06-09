@@ -16,4 +16,10 @@ public interface ReportRepository extends JpaRepository<ReportEntity ,Long> {
 
     // 같은 기간 보고서 중복 확인
     Optional<ReportEntity> findByDoctorAndPatientAndStartDateAndEndDate(DoctorEntity doctor, PatientEntity patient, LocalDate startDate, LocalDate endDate);
+
+    // 환자 삭제시 연간된 보고서도 삭제
+    void deleteAllByPatient(PatientEntity patient);
+
+    // 의사 삭제시 보고서도 삭제
+    void deleteAllByDoctor(DoctorEntity doctor);
 }

@@ -19,4 +19,16 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
 
     // 의사가 특정 날짜의 진료 예약 조회
     List<ReservationEntity> findAllByDoctorAndReservationDateBetweenOrderByReservationDateAsc(DoctorEntity doctor, LocalDateTime start, LocalDateTime end);
+
+    // 환자의 전체 예약 목록 조회 (삭제용)
+    List<ReservationEntity> findAllByPatient(PatientEntity patient);
+
+    // 의사의 전체 예약 목록 조회 (삭제용)
+    List<ReservationEntity> findAllByDoctor(DoctorEntity doctor);
+
+    // 환자의 전체 예약 삭제
+    void deleteAllByPatient(PatientEntity patient);
+
+    // 의사의 전체 예약 삭제
+    void deleteAllByDoctor(DoctorEntity doctor);
 }

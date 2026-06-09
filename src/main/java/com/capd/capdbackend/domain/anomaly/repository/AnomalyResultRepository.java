@@ -17,4 +17,7 @@ public interface AnomalyResultRepository extends JpaRepository<AnomalyResultEnti
     // 특정 날짜 결과 조회 (재분석 시 덮어쓰기용)
     Optional<AnomalyResultEntity> findByPatientAndAnalysisDate(
             PatientEntity patient, LocalDate analysisDate);
+
+    // 환자 삭제시 이상치 분석 결과 삭제
+    void deleteAllByPatient(PatientEntity patient);
 }

@@ -20,4 +20,10 @@ public interface ChatLogRepository extends JpaRepository<ChatLogEntity, Long> {
 
     // 의사 채팅 기록 개수 (displayOrder 계산용)
     int countByDoctor(DoctorEntity doctor);
+
+    // 의사가 회원 탈퇴시
+    void deleteAllByDoctor(DoctorEntity doctor);
+
+    // 환자가 회원 탈퇴시
+    void deleteAllByPatient(PatientEntity patient);
 }

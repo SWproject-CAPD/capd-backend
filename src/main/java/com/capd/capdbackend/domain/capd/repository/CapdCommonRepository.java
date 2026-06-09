@@ -32,4 +32,7 @@ public interface CapdCommonRepository extends JpaRepository<CapdCommonEntity, Lo
 
     // 기간 + 상태로 조회 -> 주간 보고서 생성 시 사용
     List<CapdCommonEntity> findAllByPatientAndStatusAndDateBetweenOrderByDateAsc(PatientEntity patient, CapdStatus status, LocalDate startDate, LocalDate endDate);
+
+    // 환자 삭제시 투석일지도 삭제
+    void deleteAllByPatient(PatientEntity patient);
 }
