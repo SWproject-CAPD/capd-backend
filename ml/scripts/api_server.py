@@ -48,7 +48,6 @@ base_features = [
     'urination_count',
 ]
 
-# anomaly_detection.py와 동일한 순서
 all_features = base_features.copy()
 for col in base_features:
     all_features += [
@@ -76,7 +75,7 @@ def predict_anomaly(request: AnomalyRequest):
             detail="최소 1개 이상의 기록이 필요합니다."
     )
     
-    # 디버그용 — 받은 데이터 출력
+    # 받은 데이터 출력
     print(f"\n=== 받은 데이터 ===")
     print(f"patient_id: {request.patient_id}")
     print(f"records 수: {len(request.records)}")
