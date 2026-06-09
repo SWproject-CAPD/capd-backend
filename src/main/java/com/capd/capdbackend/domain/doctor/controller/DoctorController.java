@@ -117,4 +117,18 @@ public class DoctorController {
         // 응답 반환
         return ResponseEntity.ok(BaseResponse.success(200, "이름으로 환자 조회 성공", response));
     }
+
+    // 전화번호로 환자 조회
+    @Operation(summary = "전화번호로 환자 조회 API", description = "환자의 전화번호로 환자를 조회하는 API")
+    @GetMapping("/doctors/patients/phone")
+    public ResponseEntity<BaseResponse<PatientPhoneSearchResponse>> patientSearchByPhone(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam String phone) {
+
+        // service 호출
+        PatientPhoneSearchResponse response = doctorService.patientSearchByPhone(userDetails.getIdentifier(), phone);
+
+        // 응답 반환
+        return ResponseEntity.ok(BaseResponse.success(200, "전화번호로 환자 조회 성공", response));
+    }
 }

@@ -49,6 +49,7 @@ public class DoctorService {
     private final AnswerResultRepository answerResultRepository;
     private final ChatLogRepository chatLogRepository;
     private final ReportRepository reportRepository;
+    private final PatientPhoneSearchMapper patientPhoneSearchMapper;
 
     // 의사 회원가입
     @Transactional
@@ -239,5 +240,23 @@ public class DoctorService {
         }
 
         return list;
+    }
+
+    // 전화번호로 환자 조회
+    public PatientPhoneSearchResponse patientSearchByPhone(String licenseId, String phone) {
+
+        // 의사가 존재하는지 확인
+        DoctorEntity doctor = doctorRepository.findByLicenseId(licenseId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 전화번호로 사용자가 있는지 조회
+        UserEntity user = userRepository.findByPhone(phone)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 환자가 있는지 조회
+        PatientEntity patient = patientRepository.findByUser(user)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        return patientPhoneSearchMapper.toResponse(patient, user);
     }
 }
