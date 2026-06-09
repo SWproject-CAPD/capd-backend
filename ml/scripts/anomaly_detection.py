@@ -29,16 +29,16 @@ for pid in df['patient_id'].unique():
     pdata = df[df['patient_id'] == pid].sort_values('date').copy()
 
     for col in base_features:
-        # 전날 대비 변화량 (difference)
+        # 전날 대비 변화량
         pdata[f'{col}_diff'] = pdata[col].diff()
 
-        # 7일 이동평균 (rolling mean)
+        # 7일 이동평균
         pdata[f'{col}_roll_mean'] = pdata[col].rolling(window=7, min_periods=1).mean()
 
-        # 7일 이동표준편차 (rolling std)
+        # 7일 이동표준편차
         pdata[f'{col}_roll_std'] = pdata[col].rolling(window=7, min_periods=1).std().fillna(0)
 
-        # 이동평균 대비 잔차 (residual) -> 현재 값이 최근 이동편균에서 얼마나 벗어났는지 확인
+        # 이동평균 대비 잔차 -> 현재 값이 최근 이동편균에서 얼마나 벗어났는지 확인
         pdata[f'{col}_residual'] = pdata[col] - pdata[f'{col}_roll_mean']
 
     result_dfs.append(pdata)

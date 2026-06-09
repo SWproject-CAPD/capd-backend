@@ -15,7 +15,7 @@ public class MlApiClient {
 
     private final RestClient restClient;
 
-    // application.yml(또는 properties)에서 URL을 주입받음. 없으면 localhost 기본값 사용
+    // application.yml(또는 properties)에서 URL을 주입, 없으면 localhost 기본값 사용
     public MlApiClient(@Value("${ml.api.base-url:http://localhost:8000}") String baseUrl) {
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
@@ -25,7 +25,7 @@ public class MlApiClient {
     public Map<String, Object> requestAnomalyAnalysis(
             String patientId, List<CapdCommonEntity> recentRecords) {
 
-        // 1. 요청 데이터 구성 (멘토님 코드 그대로!)
+        // 요청 데이터 구성
         List<Map<String, Object>> records = recentRecords.stream()
                 .map(r -> Map.<String, Object>of(
                         "date", r.getDate().toString(),
@@ -44,7 +44,7 @@ public class MlApiClient {
         );
 
         try {
-            // 2. RestClient를 이용한 동기식 통신 (.block()이 필요 없음!)
+            // RestClient를 이용한 통신
             Map response = restClient.post()
                     .uri("/api/ml/anomaly")
                     .body(requestBody)
@@ -57,8 +57,6 @@ public class MlApiClient {
 
         } catch (Exception e) {
             log.error("ML API 호출 실패: {}", e.getMessage());
-            // 3. 프로젝트의 규격화된 커스텀 에러로 던지기 (예시)
-            // throw new CustomException(ErrorCode.ML_SERVER_ERROR);
             throw new RuntimeException("ML 서버 연결 실패: " + e.getMessage());
         }
     }
