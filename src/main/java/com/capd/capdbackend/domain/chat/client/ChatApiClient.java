@@ -2,6 +2,7 @@ package com.capd.capdbackend.domain.chat.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
@@ -17,10 +18,10 @@ public class ChatApiClient {
 
     private final RestClient restClient;
 
-    public ChatApiClient() {
+    public ChatApiClient(@Value("${ml.api.base-url}") String mlApiBaseUrl) {
         this.restClient = RestClient.builder()
-                .requestFactory(new SimpleClientHttpRequestFactory()) // 422 에러 해결
-                .baseUrl("http://localhost:8000")
+                .requestFactory(new SimpleClientHttpRequestFactory())
+                .baseUrl(mlApiBaseUrl)
                 .build();
     }
 
