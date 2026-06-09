@@ -128,9 +128,11 @@ public class AnomalyService {
                 topCausesJson
         );
 
+        // DB 저장
         anomalyResultRepository.save(anomalyResult);
-        log.info("이상치 분석 완료: patientId={}, riskLevel={}",
-                patientId, result.get("risk_level"));
+
+        // 로그 출력
+        log.info("이상치 분석 완료: patientId={}, riskLevel={}", patientId, result.get("risk_level"));
 
         return toResponse(anomalyResult);
     }
