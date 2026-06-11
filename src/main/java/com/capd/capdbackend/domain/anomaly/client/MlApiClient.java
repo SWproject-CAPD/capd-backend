@@ -4,6 +4,7 @@ import com.capd.capdbackend.domain.capd.entity.CapdCommonEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -19,6 +20,7 @@ public class MlApiClient {
     // application.yml(또는 properties)에서 URL을 주입, 없으면 localhost 기본값 사용
     public MlApiClient(@Value("${ml.api.base-url:http://localhost:8000}") String baseUrl) {
         this.restClient = RestClient.builder()
+                .requestFactory(new SimpleClientHttpRequestFactory())
                 .baseUrl(baseUrl)
                 .build();
     }
