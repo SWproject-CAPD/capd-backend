@@ -39,6 +39,9 @@ public class PatientInfoResponse {
     @Schema(description = "사용자 권한", example = "PATIENT")
     private Role role;
 
+    @Schema(description = "담당 의사 고유번호", example = "1")
+    private Long doctorId;
+
     @Schema(description = "회원가입 날짜", example = "2026-04-17T13:40:00")
     private LocalDateTime createdAt;
 
