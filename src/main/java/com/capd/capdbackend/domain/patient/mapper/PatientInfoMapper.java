@@ -25,6 +25,7 @@ public class PatientInfoMapper {
                         : 0) // 기존에 있던 환자는 NULL로 인한 서버 오류 때문에 0으로 반환
                 .role(user.getRole())
                 .doctorId(patient.getDoctor() != null ? patient.getDoctor().getDoctorId() : null)
+                .doctorName(patient.getDoctor() != null ? patient.getDoctor().getUser().getUserName() : null)
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
