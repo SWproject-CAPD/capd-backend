@@ -105,6 +105,9 @@ jobs:
 
             # Docker network 생성
             docker network create capd-network || true
+          
+            # 사용하지 않는 이미지 정리
+            docker system prune -af
 
             # 기존 컨테이너 중지 및 제거
             docker stop capd-backend || true
@@ -156,6 +159,7 @@ jobs:
               --name capd-backend \
               --network capd-network \
               -p 8080:8080 \
+              -e JAVA_OPTS="-Xms256m -Xmx512m" \
               -v /home/jmo02_kim/gcp-credentials.json:/home/jmo02_kim/gcp-credentials.json \
               asia-northeast3-docker.pkg.dev/skuniv-training-1/capd-repo/capd-backend:latest
 
