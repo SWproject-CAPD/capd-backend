@@ -3,6 +3,7 @@ package com.capd.capdbackend.domain.anomaly.client;
 import com.capd.capdbackend.domain.capd.entity.CapdCommonEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -47,6 +48,7 @@ public class MlApiClient {
             // RestClient를 이용한 통신
             Map response = restClient.post()
                     .uri("/api/ml/anomaly")
+                    .contentType(MediaType.APPLICATION_JSON)
                     .body(requestBody)
                     .retrieve()
                     .body(Map.class); // Map 형태로 바로 받아옴
