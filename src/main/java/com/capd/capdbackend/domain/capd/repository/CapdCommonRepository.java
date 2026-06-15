@@ -35,4 +35,7 @@ public interface CapdCommonRepository extends JpaRepository<CapdCommonEntity, Lo
 
     // 환자 삭제시 투석일지도 삭제
     void deleteAllByPatient(PatientEntity patient);
+
+    // 최근 투석일지 7개 조회
+    List<CapdCommonEntity> findTop7ByPatientAndStatusOrderByDateDesc(PatientEntity patient, CapdStatus status);
 }

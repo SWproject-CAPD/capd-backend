@@ -46,10 +46,11 @@ public class ChatService {
         PatientEntity patient = patientRepository.findByUserEmail(email)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-        // 최근 7일치 투석 데이터 조회
-        LocalDate endDate = LocalDate.now();
-        LocalDate startDate = endDate.minusDays(6);
-        List<CapdCommonEntity> records = capdCommonRepository.findAllByPatientAndStatusAndDateBetweenOrderByDateAsc(patient, CapdStatus.SUBMITTED, startDate, endDate);
+        // 최근 투석일지 7개 조회
+        List<CapdCommonEntity> records = capdCommonRepository.findTop7ByPatientAndStatusOrderByDateDesc(patient, CapdStatus.SUBMITTED);
+
+        // 오름차순 정렬
+        records.sort((a, b) -> a.getDate().compareTo(b.getDate()));
 
         // 투석 데이터 변환
         List<Map<String, Object>> recentRecords = records.stream()
@@ -101,10 +102,11 @@ public class ChatService {
         PatientEntity patient = patientRepository.findByPatientId(patientId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-        // 최근 7일치 투석 데이터 조회
-        LocalDate endDate = LocalDate.now();
-        LocalDate startDate = endDate.minusDays(6);
-        List<CapdCommonEntity> records = capdCommonRepository.findAllByPatientAndStatusAndDateBetweenOrderByDateAsc(patient, CapdStatus.SUBMITTED, startDate, endDate);
+        // 최근 투석일지 7개 조회
+        List<CapdCommonEntity> records = capdCommonRepository.findTop7ByPatientAndStatusOrderByDateDesc(patient, CapdStatus.SUBMITTED);
+
+        // 오름차순 정렬
+        records.sort((a, b) -> a.getDate().compareTo(b.getDate()));
 
         // 투석 데이터 변환
         List<Map<String, Object>> recentRecords = records.stream()
