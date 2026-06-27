@@ -16,38 +16,22 @@ CAPD 환자의 투석 데이터를 효율적으로 관리하고 의료진의 업
 - PDF 보고서 생성
 - Docker 및 GitHub Actions 기반 자동 배포까지 실제 서비스 운영을 고려하여 개발했습니다.
 
----
-
 ## 기술 스택
 
-### Backend
+### Languages
+- Java, Python
 
-- Java
-- Spring Boot
-- Spring Data JPA
-- Spring Security
-
-### AI Server
-
-- Python
-- FastAPI
-- scikit-learn (Isolation Forest)
-- Gemini API
+### Frameworks
+- Spring Boot, FastAPI
 
 ### Database
+- MySQL, Redis, ChromaDB
 
-- MySQL
-- Redis
-- ChromaDB
+### AI/ML
+- Gemini API, scikit-learn(Isolation Forest)
 
-### Infrastructure
-
-- Docker
-- GitHub Actions
-- GCP
-- Nginx
-
----
+### DevOps
+- Docker, GCP, GitHub Actions, Nginx
 
 ## ERD
 <img width="4240" height="1532" alt="복막투석ERD" src="https://github.com/user-attachments/assets/1c097f1a-d869-4104-84d7-9eda1889121d" />
