@@ -1,5 +1,57 @@
 # capd-backend
-스프링부트를 이용한 복막투석 환자 관리 시스템
+Spring Boot와 FastAPI를 기반으로 복막투석(CAPD) 환자를 관리하는 서비스
+- 의사에겐 환자 데이터 관리뿐만 및 AI 기반 이상치 탐지, RAG 기반 의료 챗봇, AI 설문 생성, 주간 보고서 생성 기능을 제공
+- 환자에겐 투석기록 제출, RAG 기반 챗봇, 설문 답변, 예약 날짜 조회 기능 제공
+
+# 프로젝트 소개
+
+CAPD 환자의 투석 데이터를 효율적으로 관리하고 의료진의 업무를 지원하기 위해 개발한 프로젝트입니다.
+
+백엔드는 Spring Boot와 FastAPI를 분리하여 구축하였으며,
+
+- REST API 기반 환자 관리
+- AI 기반 이상치 탐지
+- RAG 기반 의료 챗봇
+- AI 설문 생성
+- PDF 보고서 생성
+- Docker 및 GitHub Actions 기반 자동 배포까지 실제 서비스 운영을 고려하여 개발했습니다.
+
+---
+
+# 기술 스택
+
+## Backend
+
+- Java
+- Spring Boot
+- Spring Data JPA
+- Spring Security
+
+## AI Server
+
+- Python
+- FastAPI
+- scikit-learn (Isolation Forest)
+- Gemini API
+
+## Database
+
+- MySQL
+- Redis
+- ChromaDB
+
+## Infrastructure
+
+- Docker
+- GitHub Actions
+- GCP
+- Nginx
+
+---
+
+# ERD
+<img width="4240" height="1532" alt="복막투석ERD" src="https://github.com/user-attachments/assets/1c097f1a-d869-4104-84d7-9eda1889121d" />
+
 
 ## 🎯 Git Convention
 
